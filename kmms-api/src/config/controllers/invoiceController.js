@@ -5,8 +5,16 @@ const { createNotification } = require('../../utils/notificationHelper');
 // GET all invoices
 exports.getInvoices = async (req, res, next) => {
   try {
-    const invoices = await Invoice.find()
-      .populate("studentId", "name");
+    const query = { status: { $ne: "cancelled" } };
+
+    if (req.user && String(req.user.role || "").toLowerCase() === "parent") {
+      const children = await Student.find({ parentId: req.user._id }).select("_id");
+      query.studentId = { $in: children.map((child) => child._id) };
+    }
+
+    const invoices = await Invoice.find(query)
+      .populate("studentId", "name classId")
+      .populate("feeTemplateId", "name feeType");
     res.json(invoices);
   } catch (err) {
     next(err);
@@ -16,7 +24,9 @@ exports.getInvoices = async (req, res, next) => {
 // GET invoice by ID
 exports.getInvoice = async (req, res, next) => {
   try {
-    const invoice = await Invoice.findById(req.params.id);
+    const invoice = await Invoice.findById(req.params.id)
+      .populate("studentId", "name classId")
+      .populate("feeTemplateId", "name feeType");
     if (!invoice) return res.status(404).json({ message: "Invoice not found" });
 
     res.json(invoice);
@@ -28,7 +38,15 @@ exports.getInvoice = async (req, res, next) => {
 // CREATE invoice
 exports.createInvoice = async (req, res, next) => {
   try {
-    const invoice = await Invoice.create(req.body);
+    const payload = {
+      ...req.body,
+      feeItem: req.body.feeItem || req.body.category || "Invoice",
+      feeType: req.body.feeType || "manual",
+      isAutomated: Boolean(req.body.isAutomated),
+      periodKey: req.body.periodKey || "",
+    };
+
+    const invoice = await Invoice.create(payload);
 
     // Notify Parent
     try {
@@ -62,7 +80,9 @@ exports.updateInvoice = async (req, res, next) => {
       req.params.id,
       req.body,
       { new: true }
-    );
+    )
+      .populate("studentId", "name classId")
+      .populate("feeTemplateId", "name feeType");
     if (!updated) return res.status(404).json({ message: "Invoice not found" });
 
     res.json(updated);

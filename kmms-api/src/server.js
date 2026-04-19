@@ -6,6 +6,7 @@ const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 const { notFound, errorHandler } = require("./config/middleware/errorHandler");
 const http = require("http");
+const { startFeeAutomationScheduler } = require("./config/services/feeAutomationService");
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use("/api/classes", require("./config/routes/classRoutes"));
 app.use("/api/progress", require("./config/routes/progressRoutes"));
 app.use("/api/invoices", require("./config/routes/invoiceRoutes"));
 app.use("/api/payments", require("./config/routes/paymentRoutes"));
+app.use("/api/fee-templates", require("./config/routes/feeTemplateRoutes"));
 app.use("/api/schedules", require("./config/routes/scheduleRoutes"));
 app.use("/api/messages", require("./config/routes/messageRoutes"));
 app.use("/api/notifications", require("./config/routes/notificationRoutes"));
@@ -63,6 +65,8 @@ initIO(server); // no need to store io globally here
 // START SERVER (ONLY ONE)
 // ------------------
 const PORT = process.env.PORT || 5000;
+
+startFeeAutomationScheduler();
 
 server.listen(PORT, () => {
   console.log(`KMMS API + Socket.IO running on port ${PORT}`);

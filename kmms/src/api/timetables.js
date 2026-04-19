@@ -25,6 +25,11 @@ export const getTeacherTimetable = async () => {
 };
 
 // PARENT
+export const getParentTimetable = async () => {
+  const res = await api.get("/timetables/parent");
+  return res.data;
+};
+
 export const getParentTimetableToday = async () => {
   const res = await api.get("/timetables/parent/today");
   return res.data;

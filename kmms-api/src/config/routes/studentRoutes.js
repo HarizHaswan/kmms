@@ -4,6 +4,7 @@ const Class = require("../models/Class");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const { protect, authorize } = require("../middleware/authMiddleware");
+const { syncFeeTemplates } = require("../services/feeAutomationService");
 
 const router = express.Router();
 
@@ -194,6 +195,11 @@ router.post("/", protect, authorize("admin"), async (req, res, next) => {
     }
 
     const student = await Student.create(data);
+    await syncFeeTemplates({
+      studentIds: [student._id],
+      refreshExisting: true,
+      triggeredBy: req.user ? req.user._id : null,
+    });
     return res.status(201).json(student);
   } catch (err) {
     next(err);

@@ -1,5 +1,19 @@
 const Timetable = require("../models/Timetable");
+const Student = require("../models/Student");
 const { createNotification } = require("../../utils/notificationHelper");
+
+/** Resolve the child's class for a logged-in parent (childStudentId or first student by parentId). */
+async function getClassIdForParentUser(parentUser) {
+  let student = null;
+  if (parentUser.childStudentId) {
+    student = await Student.findById(parentUser.childStudentId);
+  }
+  if (!student) {
+    student = await Student.findOne({ parentId: parentUser._id });
+  }
+  if (!student || !student.classId) return null;
+  return student.classId;
+}
 
 /**
  * ADMIN — Create timetable slot
@@ -98,24 +112,36 @@ exports.getTeacherTimetable = async (req, res) => {
 
 
 /**
+ * PARENT — View child's full weekly timetable (same scope as class timetable for teachers)
+ */
+exports.getParentTimetable = async (req, res) => {
+  try {
+    const classId = await getClassIdForParentUser(req.user);
+    if (!classId) {
+      return res.json([]);
+    }
+
+    const timetable = await Timetable.find({ classId })
+      .populate("teacherId", "name")
+      .populate("classId", "className")
+      .sort({ startTime: 1 });
+
+    res.json(timetable);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to load parent timetable" });
+  }
+};
+
+/**
  * PARENT — View child's timetable (today)
  */
 exports.getParentTimetableToday = async (req, res) => {
   try {
-    // 1️⃣ Get parent user
-    const parent = req.user;
-
-    if (!parent.childStudentId) {
+    const classId = await getClassIdForParentUser(req.user);
+    if (!classId) {
       return res.json([]);
     }
 
-    // 2️⃣ Get student
-    const student = await Student.findById(parent.childStudentId);
-    if (!student || !student.classId) {
-      return res.json([]);
-    }
-
-    // 3️⃣ Get today (Monday, Tuesday, ...)
     const DAYS = [
       "Sunday",
       "Monday",
@@ -127,9 +153,8 @@ exports.getParentTimetableToday = async (req, res) => {
     ];
     const today = DAYS[new Date().getDay()];
 
-    // 4️⃣ Get timetable for today
     const timetable = await Timetable.find({
-      classId: student.classId,
+      classId,
       day: today,
     })
       .populate("teacherId", "name")

@@ -54,6 +54,7 @@ const Sidebar = ({
   ];
 
   const parentTabs = [
+    { id: "timetables", label: "Child's Timetable", icon: Calendar },
     //{ id: "child-activities", label: "Child Activities", icon: Camera }, // placeholder
     //{ id: "child-attendance", label: "Attendance", icon: CheckCircle },  // placeholder
     { id: "progress", label: "Progress Reports", icon: FileText },       // placeholder

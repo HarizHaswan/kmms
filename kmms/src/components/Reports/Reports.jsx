@@ -1,373 +1,859 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  BarChart3,
-  Calendar,
-  Users,
-  CheckCircle,
-  XCircle,
-  Percent,
-  Loader2,
-  DollarSign,
-  TrendingUp,
-  TrendingDown,
-  CreditCard,
   AlertCircle,
   Banknote,
-  Receipt
+  BarChart3,
+  Calendar,
+  CheckCircle,
+  CreditCard,
+  DollarSign,
+  Loader2,
+  Paperclip,
+  Percent,
+  Receipt,
+  Users,
+  XCircle,
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { getClasses } from "../../api/classes";
+import { getStudents } from "../../api/students";
 import { getMonthlyStats } from "../../api/attendance";
-import { getAllSalaries } from "../../api/salary";
 import { getPayments } from "../../api/payments";
 import { getInvoices } from "../../api/invoices";
 
-const Reports = () => {
-  const [activeReport, setActiveReport] = useState("attendance");
+const getIdValue = (value) => {
+  if (!value) return "";
+  if (typeof value === "object") {
+    return String(value._id || value.id || "");
+  }
+  return String(value);
+};
 
-  // --- ATTENDANCE STATE ---
-  const [classes, setClasses] = useState([]);
-  const [selectedClassId, setSelectedClassId] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  // --- FINANCIAL STATE (Live) ---
-  const [finLoading, setFinLoading] = useState(false);
-  const [payments, setPayments] = useState([]);
-  const [salaries, setSalaries] = useState([]);
-  const [invoices, setInvoices] = useState([]);
-  const [finMonth, setFinMonth] = useState(new Date().toISOString().slice(0, 7));
-
-  // 1. Load Classes
-  useEffect(() => {
-    async function loadClasses() {
-      try {
-        const data = await getClasses();
-        setClasses(data || []);
-        if (data && data.length > 0) setSelectedClassId(data[0]._id);
-      } catch (err) {
-        console.error("Failed to load classes", err);
-      }
-    }
-    loadClasses();
-  }, []);
-
-  // 2. Fetch Attendance Stats
-  useEffect(() => {
-    if (!selectedClassId || !selectedMonth) return;
-    if (activeReport !== "attendance") return;
-    async function fetchStats() {
-      setLoading(true);
-      try {
-        const data = await getMonthlyStats(selectedClassId, selectedMonth);
-        setStats(data);
-      } catch (err) {
-        console.error("Failed to load stats", err);
-        setStats(null);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchStats();
-  }, [selectedClassId, selectedMonth, activeReport]);
-
-  // 3. Fetch Financial Data when tab switches
-  useEffect(() => {
-    if (activeReport !== "financial") return;
-    async function fetchFinancials() {
-      setFinLoading(true);
-      try {
-        const [payData, salData, invData] = await Promise.all([
-          getPayments(),
-          getAllSalaries(),
-          getInvoices()
-        ]);
-        setPayments(payData || []);
-        setSalaries(salData || []);
-        setInvoices(invData || []);
-      } catch (err) {
-        console.error("Failed to load financial data", err);
-      } finally {
-        setFinLoading(false);
-      }
-    }
-    fetchFinancials();
-  }, [activeReport]);
-
-  // --- FINANCIAL DERIVED METRICS ---
-  const [filterYear, filterMonth] = finMonth.split("-");
-
-  const filteredPayments = payments.filter(p => {
-    const d = new Date(p.paidAt);
-    return d.getFullYear() === Number(filterYear) && (d.getMonth() + 1) === Number(filterMonth);
+const formatMoney = (value) =>
+  Number(value || 0).toLocaleString("en-MY", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   });
 
-  const filteredSalaries = salaries.filter(s =>
-    String(s.year) === filterYear && String(s.month).padStart(2, "0") === filterMonth
+const getMonthKey = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 7);
+};
+
+const getStudentStatus = (student) =>
+  String(student?.status || "active").toLowerCase();
+
+const getAttendanceHealthLabel = (percentage) => {
+  if (percentage >= 95) return "Excellent";
+  if (percentage >= 85) return "Healthy";
+  if (percentage >= 75) return "Needs Attention";
+  return "Critical";
+};
+
+const Reports = () => {
+  const [activeReport, setActiveReport] = useState("attendance");
+  const [classes, setClasses] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [invoices, setInvoices] = useState([]);
+  const [selectedAttendanceClassId, setSelectedAttendanceClassId] = useState("");
+  const [selectedAttendanceMonth, setSelectedAttendanceMonth] = useState(
+    new Date().toISOString().slice(0, 7)
+  );
+  const [selectedLedgerClassId, setSelectedLedgerClassId] = useState("all");
+  const [selectedLedgerMonth, setSelectedLedgerMonth] = useState(
+    new Date().toISOString().slice(0, 7)
+  );
+  const [attendanceStats, setAttendanceStats] = useState(null);
+  const [baseLoading, setBaseLoading] = useState(true);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadReportData = async () => {
+      setBaseLoading(true);
+
+      try {
+        const [classData, studentData, paymentData, invoiceData] = await Promise.all([
+          getClasses(),
+          getStudents(),
+          getPayments(),
+          getInvoices(),
+        ]);
+
+        if (!isMounted) return;
+
+        setClasses(classData || []);
+        setStudents(studentData || []);
+        setPayments(paymentData || []);
+        setInvoices(invoiceData || []);
+
+        if ((classData || []).length > 0) {
+          setSelectedAttendanceClassId((current) => current || classData[0]._id);
+        }
+      } catch (error) {
+        if (!isMounted) return;
+        console.error("Failed to load reports data", error);
+      } finally {
+        if (isMounted) {
+          setBaseLoading(false);
+        }
+      }
+    };
+
+    loadReportData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadAttendanceStats = async () => {
+      if (!selectedAttendanceClassId || !selectedAttendanceMonth) {
+        setAttendanceStats(null);
+        return;
+      }
+
+      setAttendanceLoading(true);
+
+      try {
+        const stats = await getMonthlyStats(
+          selectedAttendanceClassId,
+          selectedAttendanceMonth
+        );
+        if (!isMounted) return;
+        setAttendanceStats(stats);
+      } catch (error) {
+        if (!isMounted) return;
+        console.error("Failed to load attendance stats", error);
+        setAttendanceStats(null);
+      } finally {
+        if (isMounted) {
+          setAttendanceLoading(false);
+        }
+      }
+    };
+
+    loadAttendanceStats();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedAttendanceClassId, selectedAttendanceMonth]);
+
+  const sortedClasses = useMemo(
+    () =>
+      [...classes].sort((left, right) => {
+        const leftYear = Number(left.yearGroup || 0);
+        const rightYear = Number(right.yearGroup || 0);
+        if (leftYear !== rightYear) return leftYear - rightYear;
+        return String(left.className || "").localeCompare(
+          String(right.className || "")
+        );
+      }),
+    [classes]
   );
 
-  const totalRevenue = filteredPayments.reduce((sum, p) => sum + p.amountPaid, 0);
-  const totalSalaryExpenses = filteredSalaries.reduce((sum, s) =>
-    sum + (s.baseSalary || 0) + (s.allowance || 0) - (s.deduction || 0), 0);
-  const netBalance = totalRevenue - totalSalaryExpenses;
+  const getClassLabel = (classValue) => {
+    const classId = getIdValue(classValue);
+    const classRecord =
+      (typeof classValue === "object" && classValue?.className && classValue) ||
+      sortedClasses.find((item) => getIdValue(item) === classId);
 
-  const totalInvoiced = invoices.reduce((sum, i) => sum + i.amount, 0);
-  const totalPaid = payments.reduce((sum, p) => sum + p.amountPaid, 0);
-  const outstanding = Math.max(0, totalInvoiced - totalPaid);
+    if (!classRecord) return "Unassigned Class";
+    if (classRecord.yearGroup) {
+      return `${classRecord.className} - ${classRecord.yearGroup} Years`;
+    }
+    return classRecord.className || "Unassigned Class";
+  };
 
-  const incomeItems = filteredPayments.map(p => ({
-    id: p._id,
-    desc: `Fee Payment — ${p.studentId?.name || "Student"}`,
-    amount: p.amountPaid,
-    date: new Date(p.paidAt).toLocaleDateString(),
-    type: "income"
-  }));
+  const getStudentName = (studentValue) => {
+    if (studentValue?.name) return studentValue.name;
 
-  const expenseItems = filteredSalaries.map(s => ({
-    id: s._id,
-    desc: `Salary — ${s.teacher?.name || "Teacher"} (${s.month}/${s.year})`,
-    amount: (s.baseSalary || 0) + (s.allowance || 0) - (s.deduction || 0),
-    date: s.paidAt ? new Date(s.paidAt).toLocaleDateString() : "Pending",
-    type: "expense"
-  }));
+    const studentId = getIdValue(studentValue);
+    return (
+      students.find((student) => getIdValue(student) === studentId)?.name ||
+      "Unknown Student"
+    );
+  };
 
-  const allTransactions = [...incomeItems, ...expenseItems]
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
+  const selectedAttendanceClassLabel = getClassLabel(selectedAttendanceClassId);
+  const attendanceClassStudents = students.filter(
+    (student) =>
+      getIdValue(student.classId) === selectedAttendanceClassId &&
+      getStudentStatus(student) === "active"
+  );
+  const attendancePercentage = Number(attendanceStats?.percentage || 0);
+  const attendanceHealth = getAttendanceHealthLabel(attendancePercentage);
+  const attendanceAbsenceRate =
+    attendanceStats?.totalRecords > 0 ? 100 - attendancePercentage : 0;
 
-  const maxBar = Math.max(totalRevenue, totalSalaryExpenses, 1);
-  const incomePct = Math.round((totalRevenue / maxBar) * 100);
-  const expensePct = Math.round((totalSalaryExpenses / maxBar) * 100);
+  const ledgerScopeLabel =
+    selectedLedgerClassId === "all"
+      ? "All Classes"
+      : getClassLabel(selectedLedgerClassId);
+
+  const ledgerStudentIds = (
+    selectedLedgerClassId === "all"
+      ? students
+      : students.filter(
+          (student) => getIdValue(student.classId) === selectedLedgerClassId
+        )
+  ).map((student) => getIdValue(student));
+
+  const ledgerScopedInvoices = invoices.filter((invoice) =>
+    ledgerStudentIds.includes(getIdValue(invoice.studentId))
+  );
+  const ledgerScopedPayments = payments.filter((payment) =>
+    ledgerStudentIds.includes(getIdValue(payment.studentId))
+  );
+  const monthlyInvoices = ledgerScopedInvoices.filter(
+    (invoice) => getMonthKey(invoice.createdAt) === selectedLedgerMonth
+  );
+  const monthlyPayments = ledgerScopedPayments.filter(
+    (payment) => getMonthKey(payment.paidAt) === selectedLedgerMonth
+  );
+
+  const paymentTotalsByInvoiceId = ledgerScopedPayments.reduce(
+    (summary, payment) => {
+      const invoiceId = getIdValue(payment.invoiceId);
+      if (!invoiceId) return summary;
+      summary[invoiceId] = (summary[invoiceId] || 0) + Number(payment.amountPaid || 0);
+      return summary;
+    },
+    {}
+  );
+
+  const monthlyInvoiceIds = new Set(monthlyInvoices.map((invoice) => getIdValue(invoice)));
+  const collectedAgainstMonthlyInvoices = ledgerScopedPayments
+    .filter((payment) => monthlyInvoiceIds.has(getIdValue(payment.invoiceId)))
+    .reduce((sum, payment) => sum + Number(payment.amountPaid || 0), 0);
+
+  const totalIssuedThisMonth = monthlyInvoices.reduce(
+    (sum, invoice) => sum + Number(invoice.amount || 0),
+    0
+  );
+  const totalCollectedThisMonth = monthlyPayments.reduce(
+    (sum, payment) => sum + Number(payment.amountPaid || 0),
+    0
+  );
+  const totalOutstandingBalance = ledgerScopedInvoices.reduce((sum, invoice) => {
+    const invoiceId = getIdValue(invoice);
+    const paidAmount = Number(paymentTotalsByInvoiceId[invoiceId] || 0);
+    return sum + Math.max(0, Number(invoice.amount || 0) - paidAmount);
+  }, 0);
+  const collectionRate =
+    totalIssuedThisMonth > 0
+      ? Math.min(
+          100,
+          Math.round((collectedAgainstMonthlyInvoices / totalIssuedThisMonth) * 100)
+        )
+      : 0;
+
+  const invoiceStatusSummary = ledgerScopedInvoices.reduce(
+    (summary, invoice) => {
+      const status = String(invoice.status || "unpaid").toLowerCase();
+      if (summary[status] !== undefined) {
+        summary[status] += 1;
+      }
+      return summary;
+    },
+    { paid: 0, partial: 0, unpaid: 0 }
+  );
+
+  const cashCollectionsThisMonth = monthlyPayments
+    .filter((payment) => String(payment.method || "").toLowerCase() === "cash")
+    .reduce((sum, payment) => sum + Number(payment.amountPaid || 0), 0);
+  const uploadedReceiptsThisMonth = monthlyPayments.filter(
+    (payment) => Boolean(payment.receiptUrl)
+  ).length;
+
+  const paymentMethodBreakdown = Object.values(
+    monthlyPayments.reduce((summary, payment) => {
+      const method = payment.method || "Unknown";
+      if (!summary[method]) {
+        summary[method] = { method, count: 0, amount: 0 };
+      }
+
+      summary[method].count += 1;
+      summary[method].amount += Number(payment.amountPaid || 0);
+      return summary;
+    }, {})
+  ).sort((left, right) => right.amount - left.amount);
+
+  const highestMethodAmount = Math.max(
+    ...paymentMethodBreakdown.map((item) => item.amount),
+    1
+  );
+
+  const recentPayments = [...monthlyPayments]
+    .sort((left, right) => new Date(right.paidAt) - new Date(left.paidAt))
+    .slice(0, 8);
+
+  const outstandingInvoices = ledgerScopedInvoices
+    .map((invoice) => {
+      const invoiceId = getIdValue(invoice);
+      const paidAmount = Number(paymentTotalsByInvoiceId[invoiceId] || 0);
+      const outstandingAmount = Math.max(0, Number(invoice.amount || 0) - paidAmount);
+
+      return {
+        ...invoice,
+        paidAmount,
+        outstandingAmount,
+      };
+    })
+    .filter((invoice) => invoice.outstandingAmount > 0)
+    .sort(
+      (left, right) =>
+        new Date(left.dueDate || left.createdAt) - new Date(right.dueDate || right.createdAt)
+    )
+    .slice(0, 8);
 
   return (
     <div className="space-y-6">
-      {/* HEADER & TABS */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Analytics & Reports</h2>
-          <p className="text-gray-500">Overview of school performance and finances</p>
+          <p className="text-gray-500">
+            Attendance insights and payment reporting from the live school records.
+          </p>
         </div>
 
         <div className="bg-white p-1 rounded-lg border shadow-sm flex">
           <button
             onClick={() => setActiveReport("attendance")}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeReport === "attendance" ? "bg-accent-light text-accent-dark shadow-sm" : "text-gray-600 hover:bg-white"
-              }`}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+              activeReport === "attendance"
+                ? "bg-accent-light text-accent-dark shadow-sm"
+                : "text-gray-600 hover:bg-gray-50"
+            }`}
           >
             Attendance Report
           </button>
           <button
-            onClick={() => setActiveReport("financial")}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeReport === "financial" ? "bg-green-100 text-green-700 shadow-sm" : "text-gray-600 hover:bg-white"
-              }`}
+            onClick={() => setActiveReport("ledger")}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+              activeReport === "ledger"
+                ? "bg-green-100 text-green-700 shadow-sm"
+                : "text-gray-600 hover:bg-gray-50"
+            }`}
           >
-            Financial Report
+            Payment & Ledger Report
           </button>
         </div>
       </div>
 
-      {/* ======================= ATTENDANCE REPORT ======================= */}
-      {activeReport === "attendance" && (
-        <div className="animate-in fade-in slide-in-from-left-4 duration-500 space-y-6">
-          <div className="bg-white p-4 rounded-xl border shadow-sm flex flex-col md:flex-row gap-6 items-start md:items-center">
-            <div className="flex flex-col gap-1.5 w-full md:w-auto">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide ml-1">Select Class</label>
-              <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200 focus-within:ring-2 focus-within:ring-accent">
-                <Users className="w-4 h-4 text-gray-400" />
-                <select
-                  className="bg-transparent text-sm font-medium text-gray-700 outline-none cursor-pointer w-full md:w-40"
-                  value={selectedClassId}
-                  onChange={(e) => setSelectedClassId(e.target.value)}
-                >
-                  {classes.map((cls) => (
-                    <option key={cls._id} value={cls._id}>{cls.className}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="hidden md:block h-10 w-px bg-gray-200 mt-6"></div>
-            <div className="flex flex-col gap-1.5 w-full md:w-auto">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide ml-1">Select Month</label>
-              <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200 focus-within:ring-2 focus-within:ring-accent">
-                <Calendar className="w-4 h-4 text-gray-400" />
-                <input type="month" className="bg-transparent text-sm font-medium text-gray-700 outline-none cursor-pointer w-full md:w-auto"
-                  value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} />
-              </div>
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-accent" /></div>
-          ) : stats ? (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card><CardContent className="p-6 flex items-center gap-4">
-                  <div className="p-3 bg-accent-light text-accent rounded-full"><Calendar className="w-6 h-6" /></div>
-                  <div><p className="text-sm text-gray-500 font-medium">Days Recorded</p><h3 className="text-2xl font-bold text-gray-900">{stats.totalDays}</h3></div>
-                </CardContent></Card>
-                <Card><CardContent className="p-6 flex items-center gap-4">
-                  <div className={`p-3 rounded-full ${stats.percentage >= 80 ? "bg-green-100 text-green-600" : "bg-yellow-100 text-yellow-600"}`}><Percent className="w-6 h-6" /></div>
-                  <div><p className="text-sm text-gray-500 font-medium">Avg Attendance</p><h3 className="text-2xl font-bold text-gray-900">{stats.percentage}%</h3></div>
-                </CardContent></Card>
-                <Card><CardContent className="p-6 flex items-center gap-4">
-                  <div className="p-3 bg-indigo-100 text-indigo-600 rounded-full"><CheckCircle className="w-6 h-6" /></div>
-                  <div><p className="text-sm text-gray-500 font-medium">Total Present</p><h3 className="text-2xl font-bold text-gray-900">{stats.totalPresent}</h3></div>
-                </CardContent></Card>
-                <Card><CardContent className="p-6 flex items-center gap-4">
-                  <div className="p-3 bg-red-100 text-red-600 rounded-full"><XCircle className="w-6 h-6" /></div>
-                  <div><p className="text-sm text-gray-500 font-medium">Total Absent</p><h3 className="text-2xl font-bold text-gray-900">{stats.totalAbsent}</h3></div>
-                </CardContent></Card>
-              </div>
-              <Card>
-                <CardHeader><CardTitle>Monthly Overview</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between text-sm font-medium text-gray-600">
-                      <span>Present ({stats.totalPresent})</span><span>Absent ({stats.totalAbsent})</span>
-                    </div>
-                    <div className="w-full h-6 bg-gray-200 rounded-full overflow-hidden flex">
-                      <div className="h-full bg-green-500 transition-all duration-1000" style={{ width: `${stats.percentage}%` }} />
-                      <div className="h-full bg-red-500 transition-all duration-1000" style={{ width: `${100 - stats.percentage}%` }} />
-                    </div>
-                    <p className="text-xs text-gray-500 text-center pt-2">Based on {stats.totalRecords} student records.</p>
+      {baseLoading ? (
+        <div className="flex justify-center py-24">
+          <Loader2 className="w-10 h-10 animate-spin text-accent" />
+        </div>
+      ) : (
+        <>
+          {activeReport === "attendance" && (
+            <div className="animate-in fade-in slide-in-from-left-4 duration-500 space-y-6">
+              <div className="bg-white p-4 rounded-xl border shadow-sm flex flex-col md:flex-row gap-6 items-start md:items-center">
+                <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide ml-1">
+                    Select Class
+                  </label>
+                  <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200 focus-within:ring-2 focus-within:ring-accent">
+                    <Users className="w-4 h-4 text-gray-400" />
+                    <select
+                      className="bg-transparent text-sm font-medium text-gray-700 outline-none cursor-pointer w-full md:w-48"
+                      value={selectedAttendanceClassId}
+                      onChange={(event) =>
+                        setSelectedAttendanceClassId(event.target.value)
+                      }
+                    >
+                      {sortedClasses.map((item) => (
+                        <option key={item._id} value={item._id}>
+                          {getClassLabel(item)}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          ) : (
-            <div className="text-center py-20 text-gray-500 bg-white rounded-lg border border-dashed">
-              <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-20" />
-              <p>No attendance data found for this month.</p>
+                </div>
+
+                <div className="hidden md:block h-10 w-px bg-gray-200 mt-6" />
+
+                <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide ml-1">
+                    Select Month
+                  </label>
+                  <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200 focus-within:ring-2 focus-within:ring-accent">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <input
+                      type="month"
+                      className="bg-transparent text-sm font-medium text-gray-700 outline-none cursor-pointer w-full md:w-auto"
+                      value={selectedAttendanceMonth}
+                      onChange={(event) =>
+                        setSelectedAttendanceMonth(event.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+
+                <p className="text-sm text-gray-500 md:ml-auto md:mt-5 italic">
+                  Attendance report is based on the selected month and current active class roster.
+                </p>
+              </div>
+
+              {attendanceLoading ? (
+                <div className="flex justify-center py-20">
+                  <Loader2 className="w-10 h-10 animate-spin text-accent" />
+                </div>
+              ) : attendanceStats && attendanceStats.totalDays > 0 ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <Card>
+                      <CardContent className="p-6 flex items-center gap-4">
+                        <div className="p-3 bg-accent-light text-accent rounded-full">
+                          <Users className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500 font-medium">
+                            Active Students
+                          </p>
+                          <h3 className="text-2xl font-bold text-gray-900">
+                            {attendanceClassStudents.length}
+                          </h3>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="p-6 flex items-center gap-4">
+                        <div className="p-3 bg-blue-100 text-blue-600 rounded-full">
+                          <Calendar className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500 font-medium">
+                            Days Recorded
+                          </p>
+                          <h3 className="text-2xl font-bold text-gray-900">
+                            {attendanceStats.totalDays}
+                          </h3>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="p-6 flex items-center gap-4">
+                        <div className="p-3 bg-green-100 text-green-600 rounded-full">
+                          <Percent className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500 font-medium">
+                            Average Attendance
+                          </p>
+                          <h3 className="text-2xl font-bold text-gray-900">
+                            {attendancePercentage}%
+                          </h3>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="p-6 flex items-center gap-4">
+                        <div className="p-3 bg-red-100 text-red-600 rounded-full">
+                          <XCircle className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500 font-medium">
+                            Total Absences
+                          </p>
+                          <h3 className="text-2xl font-bold text-gray-900">
+                            {attendanceStats.totalAbsent}
+                          </h3>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <Card className="lg:col-span-2">
+                      <CardHeader>
+                        <CardTitle>Monthly Attendance Breakdown</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-5">
+                        <div className="flex justify-between text-sm font-medium text-gray-600">
+                          <span>Present ({attendanceStats.totalPresent})</span>
+                          <span>Absent ({attendanceStats.totalAbsent})</span>
+                        </div>
+                        <div className="w-full h-6 bg-gray-200 rounded-full overflow-hidden flex">
+                          <div
+                            className="h-full bg-green-500 transition-all duration-700"
+                            style={{ width: `${attendancePercentage}%` }}
+                          />
+                          <div
+                            className="h-full bg-red-500 transition-all duration-700"
+                            style={{ width: `${attendanceAbsenceRate}%` }}
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                          <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                            <p className="text-xs uppercase font-semibold tracking-wide text-gray-500">
+                              Attendance Health
+                            </p>
+                            <p className="text-lg font-bold text-gray-900 mt-2">
+                              {attendanceHealth}
+                            </p>
+                          </div>
+                          <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                            <p className="text-xs uppercase font-semibold tracking-wide text-gray-500">
+                              Present Records
+                            </p>
+                            <p className="text-lg font-bold text-gray-900 mt-2">
+                              {attendanceStats.totalPresent}
+                            </p>
+                          </div>
+                          <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                            <p className="text-xs uppercase font-semibold tracking-wide text-gray-500">
+                              Records Counted
+                            </p>
+                            <p className="text-lg font-bold text-gray-900 mt-2">
+                              {attendanceStats.totalRecords}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Class Context</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                          <p className="text-xs uppercase font-semibold tracking-wide text-gray-500">
+                            Class
+                          </p>
+                          <p className="text-base font-bold text-gray-900 mt-2">
+                            {selectedAttendanceClassLabel}
+                          </p>
+                        </div>
+                        <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                          <p className="text-xs uppercase font-semibold tracking-wide text-gray-500">
+                            Month
+                          </p>
+                          <p className="text-base font-bold text-gray-900 mt-2">
+                            {selectedAttendanceMonth}
+                          </p>
+                        </div>
+                        <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                          <p className="text-xs uppercase font-semibold tracking-wide text-gray-500">
+                            Absence Rate
+                          </p>
+                          <p className="text-base font-bold text-gray-900 mt-2">
+                            {attendanceAbsenceRate}%
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-20 text-gray-500 bg-white rounded-lg border border-dashed">
+                  <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                  <p>No attendance data found for this class and month.</p>
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
 
-      {/* ======================= FINANCIAL REPORT (LIVE) ======================= */}
-      {activeReport === "financial" && (
-        <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-6">
+          {activeReport === "ledger" && (
+            <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-6">
+              <div className="bg-white p-4 rounded-xl border shadow-sm flex flex-col xl:flex-row gap-4 items-start xl:items-center">
+                <div className="flex flex-col gap-1.5 w-full xl:w-auto">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide ml-1">
+                    Filter by Class
+                  </label>
+                  <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200">
+                    <Users className="w-4 h-4 text-gray-400" />
+                    <select
+                      className="bg-transparent text-sm font-medium text-gray-700 outline-none cursor-pointer w-full xl:w-48"
+                      value={selectedLedgerClassId}
+                      onChange={(event) => setSelectedLedgerClassId(event.target.value)}
+                    >
+                      <option value="all">All Classes</option>
+                      {sortedClasses.map((item) => (
+                        <option key={item._id} value={item._id}>
+                          {getClassLabel(item)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
 
-          {/* Month Filter */}
-          <div className="bg-white p-4 rounded-xl border shadow-sm flex flex-col md:flex-row gap-4 items-start md:items-center">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide ml-1">Filter by Month</label>
-              <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200">
-                <Calendar className="w-4 h-4 text-gray-400" />
-                <input type="month" className="bg-transparent text-sm font-medium text-gray-700 outline-none cursor-pointer"
-                  value={finMonth} onChange={e => setFinMonth(e.target.value)} />
+                <div className="flex flex-col gap-1.5 w-full xl:w-auto">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide ml-1">
+                    Filter by Month
+                  </label>
+                  <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <input
+                      type="month"
+                      className="bg-transparent text-sm font-medium text-gray-700 outline-none cursor-pointer w-full xl:w-auto"
+                      value={selectedLedgerMonth}
+                      onChange={(event) => setSelectedLedgerMonth(event.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <p className="text-sm text-gray-500 xl:ml-auto xl:mt-5 italic">
+                  Ledger scope: {ledgerScopeLabel}. Outstanding balances use the current live invoice statuses.
+                </p>
               </div>
-            </div>
-            <p className="text-sm text-gray-500 md:ml-auto md:mt-5 italic">Data reflects transactions recorded for the selected month.</p>
-          </div>
 
-          {finLoading ? (
-            <div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-green-500" /></div>
-          ) : (
-            <>
-              {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
+                <Card className="xl:col-span-2">
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="text-sm font-medium text-gray-500">Fee Revenue</p>
-                        <h3 className="text-2xl font-bold text-green-600 mt-2">RM {totalRevenue.toLocaleString()}</h3>
-                        <p className="text-xs text-gray-400 mt-1">{filteredPayments.length} payment(s)</p>
-                      </div>
-                      <div className="p-2 bg-green-50 rounded-lg text-green-600"><DollarSign className="w-5 h-5" /></div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Salary Expenses</p>
-                        <h3 className="text-2xl font-bold text-red-500 mt-2">RM {totalSalaryExpenses.toLocaleString()}</h3>
-                        <p className="text-xs text-gray-400 mt-1">{filteredSalaries.length} payslip(s)</p>
-                      </div>
-                      <div className="p-2 bg-red-50 rounded-lg text-red-600"><Banknote className="w-5 h-5" /></div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Net Balance</p>
-                        <h3 className={`text-2xl font-bold mt-2 ${netBalance >= 0 ? "text-accent" : "text-red-600"}`}>
-                          {netBalance < 0 ? "-" : ""}RM {Math.abs(netBalance).toLocaleString()}
+                        <p className="text-sm font-medium text-gray-500">
+                          Issued This Month
+                        </p>
+                        <h3 className="text-2xl font-bold text-indigo-600 mt-2">
+                          RM {formatMoney(totalIssuedThisMonth)}
                         </h3>
-                        <p className="text-xs text-gray-400 mt-1">Revenue minus salaries</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {monthlyInvoices.length} invoice(s)
+                        </p>
                       </div>
-                      <div className={`p-2 rounded-lg ${netBalance >= 0 ? "bg-brand-bg text-accent" : "bg-red-50 text-red-600"}`}>
-                        {netBalance >= 0 ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+                      <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                        <Receipt className="w-5 h-5" />
                       </div>
                     </div>
                   </CardContent>
                 </Card>
+
+                <Card className="xl:col-span-2">
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">
+                          Collected This Month
+                        </p>
+                        <h3 className="text-2xl font-bold text-green-600 mt-2">
+                          RM {formatMoney(totalCollectedThisMonth)}
+                        </h3>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {monthlyPayments.length} payment(s)
+                        </p>
+                      </div>
+                      <div className="p-2 bg-green-50 rounded-lg text-green-600">
+                        <DollarSign className="w-5 h-5" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 <Card>
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="text-sm font-medium text-gray-500">Outstanding Fees</p>
-                        <h3 className="text-2xl font-bold text-orange-500 mt-2">RM {outstanding.toLocaleString()}</h3>
-                        <p className="text-xs text-gray-400 mt-1">All-time unpaid invoices</p>
+                        <p className="text-sm font-medium text-gray-500">
+                          Outstanding
+                        </p>
+                        <h3 className="text-2xl font-bold text-orange-500 mt-2">
+                          RM {formatMoney(totalOutstandingBalance)}
+                        </h3>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {invoiceStatusSummary.unpaid + invoiceStatusSummary.partial} open invoice(s)
+                        </p>
                       </div>
-                      <div className="p-2 bg-orange-50 rounded-lg text-orange-600"><AlertCircle className="w-5 h-5" /></div>
+                      <div className="p-2 bg-orange-50 rounded-lg text-orange-600">
+                        <AlertCircle className="w-5 h-5" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">
+                          Collection Rate
+                        </p>
+                        <h3 className="text-2xl font-bold text-gray-900 mt-2">
+                          {collectionRate}%
+                        </h3>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Paid against issued fees
+                        </p>
+                      </div>
+                      <div className="p-2 bg-gray-100 rounded-lg text-gray-700">
+                        <Percent className="w-5 h-5" />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* Bar chart + Transactions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">
+                          Paid Invoices
+                        </p>
+                        <h3 className="text-2xl font-bold text-green-600 mt-2">
+                          {invoiceStatusSummary.paid}
+                        </h3>
+                      </div>
+                      <div className="p-2 bg-green-50 rounded-lg text-green-600">
+                        <CheckCircle className="w-5 h-5" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">
+                          Partial Invoices
+                        </p>
+                        <h3 className="text-2xl font-bold text-yellow-500 mt-2">
+                          {invoiceStatusSummary.partial}
+                        </h3>
+                      </div>
+                      <div className="p-2 bg-yellow-50 rounded-lg text-yellow-600">
+                        <Percent className="w-5 h-5" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">
+                          Cash Collected
+                        </p>
+                        <h3 className="text-2xl font-bold text-emerald-600 mt-2">
+                          RM {formatMoney(cashCollectionsThisMonth)}
+                        </h3>
+                      </div>
+                      <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
+                        <Banknote className="w-5 h-5" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">
+                          Uploaded Receipts
+                        </p>
+                        <h3 className="text-2xl font-bold text-blue-600 mt-2">
+                          {uploadedReceiptsThisMonth}
+                        </h3>
+                      </div>
+                      <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+                        <Paperclip className="w-5 h-5" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <Card className="lg:col-span-1">
-                  <CardHeader><CardTitle>Income vs Expenses</CardTitle></CardHeader>
+                  <CardHeader>
+                    <CardTitle>Payment Methods - {selectedLedgerMonth}</CardTitle>
+                  </CardHeader>
                   <CardContent>
-                    <div className="h-64 flex items-end justify-center gap-12 px-4 pb-4">
-                      <div className="flex flex-col items-center gap-2">
-                        <span className="text-xs font-bold text-green-700">RM {totalRevenue.toLocaleString()}</span>
-                        <div className="w-16 bg-green-500 rounded-t-lg transition-all duration-700 hover:bg-green-600"
-                          style={{ height: `${Math.max(incomePct, 4)}%`, minHeight: "8px" }} />
-                        <span className="text-xs text-gray-500 font-medium">Income</span>
+                    {paymentMethodBreakdown.length === 0 ? (
+                      <div className="text-center py-10 text-gray-400 italic">
+                        No payments recorded for this month.
                       </div>
-                      <div className="flex flex-col items-center gap-2">
-                        <span className="text-xs font-bold text-red-600">RM {totalSalaryExpenses.toLocaleString()}</span>
-                        <div className="w-16 bg-red-400 rounded-t-lg transition-all duration-700 hover:bg-red-500"
-                          style={{ height: `${Math.max(expensePct, 4)}%`, minHeight: "8px" }} />
-                        <span className="text-xs text-gray-500 font-medium">Expenses</span>
+                    ) : (
+                      <div className="space-y-4">
+                        {paymentMethodBreakdown.map((item) => (
+                          <div key={item.method} className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center gap-2 text-gray-700 font-medium">
+                                <CreditCard className="w-4 h-4 text-gray-400" />
+                                <span>{item.method}</span>
+                              </div>
+                              <span className="text-gray-500">
+                                RM {formatMoney(item.amount)}
+                              </span>
+                            </div>
+                            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-green-500 rounded-full"
+                                style={{
+                                  width: `${Math.max(
+                                    8,
+                                    Math.round((item.amount / highestMethodAmount) * 100)
+                                  )}%`,
+                                }}
+                              />
+                            </div>
+                            <p className="text-xs text-gray-400">
+                              {item.count} transaction{item.count === 1 ? "" : "s"}
+                            </p>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                    <div className="flex justify-center gap-8 text-sm font-medium text-gray-600 border-t pt-4">
-                      <div className="flex items-center gap-2"><div className="w-3 h-3 bg-green-500 rounded-full"></div>Income</div>
-                      <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-400 rounded-full"></div>Expenses</div>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
 
                 <Card className="lg:col-span-2">
-                  <CardHeader><CardTitle>Transactions — {finMonth}</CardTitle></CardHeader>
+                  <CardHeader>
+                    <CardTitle>Recent Payment Activity - {selectedLedgerMonth}</CardTitle>
+                  </CardHeader>
                   <CardContent>
-                    {allTransactions.length === 0 ? (
-                      <div className="text-center py-10 text-gray-400 italic">No transactions recorded for this month.</div>
+                    {recentPayments.length === 0 ? (
+                      <div className="text-center py-10 text-gray-400 italic">
+                        No payment activity recorded for this month.
+                      </div>
                     ) : (
-                      <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
-                        {allTransactions.map((t) => (
-                          <div key={t.id} className="flex justify-between items-center p-3 border-b last:border-0 hover:bg-white transition-colors rounded-lg">
+                      <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                        {recentPayments.map((payment) => (
+                          <div
+                            key={payment._id}
+                            className="flex justify-between items-center p-3 border-b last:border-0 hover:bg-gray-50 transition-colors rounded-lg"
+                          >
                             <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-full ${t.type === "income" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}>
-                                {t.type === "income" ? <Receipt className="w-4 h-4" /> : <CreditCard className="w-4 h-4" />}
+                              <div className="p-2 rounded-full bg-green-100 text-green-600">
+                                <Receipt className="w-4 h-4" />
                               </div>
                               <div>
-                                <p className="font-medium text-gray-800 text-sm">{t.desc}</p>
-                                <p className="text-xs text-gray-500">{t.date}</p>
+                                <p className="font-medium text-gray-800 text-sm">
+                                  {getStudentName(payment.studentId)}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {payment.method || "Unknown method"} -{" "}
+                                  {new Date(payment.paidAt).toLocaleDateString()}
+                                </p>
                               </div>
                             </div>
-                            <span className={`font-bold text-sm ${t.type === "income" ? "text-green-600" : "text-red-500"}`}>
-                              {t.type === "income" ? "+" : "-"} RM {t.amount.toLocaleString()}
-                            </span>
+                            <div className="text-right">
+                              <p className="font-bold text-sm text-green-600">
+                                RM {formatMoney(payment.amountPaid)}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {payment.receiptUrl ? "Receipt uploaded" : "No receipt"}
+                              </p>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -375,9 +861,73 @@ const Reports = () => {
                   </CardContent>
                 </Card>
               </div>
-            </>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Outstanding Invoices - {ledgerScopeLabel}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {outstandingInvoices.length === 0 ? (
+                    <div className="text-center py-10 text-gray-400 italic">
+                      No outstanding invoices in the current scope.
+                    </div>
+                  ) : (
+                    <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                      {outstandingInvoices.map((invoice) => (
+                        <div
+                          key={invoice._id}
+                          className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 rounded-xl border border-gray-100 bg-gray-50"
+                        >
+                          <div>
+                            <p className="font-semibold text-gray-900">
+                              {getStudentName(invoice.studentId)}
+                            </p>
+                            <p className="text-sm text-gray-500 mt-1">
+                              {invoice.feeItem || invoice.category || "Fee"} -{" "}
+                              {invoice.category || "Uncategorized"}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              Issued {new Date(invoice.createdAt).toLocaleDateString()}
+                              {invoice.dueDate
+                                ? ` | Due ${new Date(invoice.dueDate).toLocaleDateString()}`
+                                : ""}
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-3 gap-3 text-sm min-w-[18rem]">
+                            <div className="rounded-lg bg-white border border-gray-100 p-3">
+                              <p className="text-xs uppercase tracking-wide font-semibold text-gray-500">
+                                Invoice
+                              </p>
+                              <p className="font-bold text-gray-900 mt-1">
+                                RM {formatMoney(invoice.amount)}
+                              </p>
+                            </div>
+                            <div className="rounded-lg bg-white border border-gray-100 p-3">
+                              <p className="text-xs uppercase tracking-wide font-semibold text-gray-500">
+                                Paid
+                              </p>
+                              <p className="font-bold text-green-600 mt-1">
+                                RM {formatMoney(invoice.paidAmount)}
+                              </p>
+                            </div>
+                            <div className="rounded-lg bg-white border border-gray-100 p-3">
+                              <p className="text-xs uppercase tracking-wide font-semibold text-gray-500">
+                                Balance
+                              </p>
+                              <p className="font-bold text-orange-500 mt-1">
+                                RM {formatMoney(invoice.outstandingAmount)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );

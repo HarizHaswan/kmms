@@ -20,6 +20,7 @@ import PaymentManagement from "../components/Payments/PaymentManagement";
 import AdminPayroll from "../components/Salary/AdminPayroll";
 import TeacherPayslips from "../components/Salary/TeacherPayslips";
 import Reports from "../components/Reports/Reports";
+import ProgressReports from "../components/Progress/ProgressReports";
 import Announcements from "../components/Announcements/Announcements";
 import TeacherStudentView from "../components/Teachers/TeacherStudentView";
 import Settings from "../components/Settings/Settings";
@@ -55,7 +56,7 @@ const Dashboard = ({ user, onLogout }) => {
         return <Teachers />;
 
       if (activeTab === "payments")
-        return <PaymentManagement role="Admin" userId={user.id} />;
+        return <PaymentManagement role="Admin" userId={user.id} user={user} />;
 
       if (activeTab === "leave")
         return <LeaveManagement />;
@@ -106,6 +107,9 @@ const Dashboard = ({ user, onLogout }) => {
       if (activeTab === "salary")
         return <TeacherPayslips />;
 
+      if (activeTab === "progress")
+        return <ProgressReports role="Teacher" user={user} />;
+
       if (activeTab === "announcements")
         return <Announcements />;
 
@@ -124,7 +128,10 @@ const Dashboard = ({ user, onLogout }) => {
         return <ParentTimetable />;
 
       if (activeTab === "payments")
-        return <PaymentManagement role="Parent" userId={user.id} />;
+        return <PaymentManagement role="Parent" userId={user.id} user={user} />;
+
+      if (activeTab === "progress")
+        return <ProgressReports role="Parent" user={user} />;
 
       if (activeTab === "announcements")
         return <Announcements />;
