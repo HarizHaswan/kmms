@@ -6,14 +6,13 @@ import TeacherDashboard from "../components/Dashboard/TeacherDashboard";
 import ParentDashboard from "../components/Dashboard/ParentDashboard";
 import AdminTimetable from "../components/Timetable/AdminTimetable";
 import Students from "./Students";
-// import StudentList from "../components/Students/StudentList";
-//import TeacherList from "../components/Teachers/TeacherList";
 
 // 1. IMPORT BOTH ATTENDANCE COMPONENTS
 import AdminAttendance from "../components/Attendance/AdminAttendance";
 import TeacherAttendance from "../components/Attendance/TeacherAttendance";
 
 import ActivitiesTracking from "../components/Activities/ActivitiesTracking";
+import ParentActivities from "../components/Activities/ParentActivities";
 import LeaveManagement from "../components/Leave/LeaveManagement";
 import LeaveRequest from "../components/Leave/LeaveRequest";
 import PaymentManagement from "../components/Payments/PaymentManagement";
@@ -99,7 +98,7 @@ const Dashboard = ({ user, onLogout }) => {
         return <TeacherAttendance user={user} />;
 
       if (activeTab === "activities")
-        return <ActivitiesTracking />;
+        return <ActivitiesTracking user={user} />;
 
       if (activeTab === "leave-request")
         return <LeaveRequest teacherId={user.id} />;
@@ -126,6 +125,9 @@ const Dashboard = ({ user, onLogout }) => {
 
       if (activeTab === "timetables")
         return <ParentTimetable />;
+
+      if (activeTab === "child-activities")
+        return <ParentActivities user={user} />;
 
       if (activeTab === "payments")
         return <PaymentManagement role="Parent" userId={user.id} user={user} />;

@@ -1,14 +1,20 @@
 import http from "./http";
 
-// GET all activities
+// GET all activities (backend filters by role automatically)
 export const getActivities = async () => {
   const res = await http.get("/activities");
   return res.data;
 };
 
-// ADD new activity
+// ADD new activity for a single student
 export const addActivityApi = async (data) => {
   const res = await http.post("/activities", data);
+  return res.data;
+};
+
+// BLAST activity to all students in teacher's class
+export const blastActivityApi = async (data) => {
+  const res = await http.post("/activities/blast", data);
   return res.data;
 };
 

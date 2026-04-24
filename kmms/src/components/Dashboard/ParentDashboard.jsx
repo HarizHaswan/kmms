@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import DashboardCard from "./DashboardCard";
-import { Users, Camera, CheckCircle, DollarSign } from "lucide-react";
+import { Users, Camera, CheckCircle, XCircle, Clock, DollarSign, FileText } from "lucide-react";
 import { getStudents } from "../../api/students";
 import { getActivities } from "../../api/activities";
-import { getPayments } from "../../api/payments";
+import { getInvoices } from "../../api/invoices";
+import { getStudentAttendanceStatus } from "../../api/attendance";
 import LiveDateTime from "../Common/LiveDateTime";
 
 
@@ -13,8 +14,11 @@ import LiveDateTime from "../Common/LiveDateTime";
 const ParentDashboard = ({ setActiveTab, user }) => {
   const [child, setChild] = useState(null);
   const [childActivities, setChildActivities] = useState([]);
-  const [childPayment, setChildPayment] = useState(null);
+  const [latestInvoice, setLatestInvoice] = useState(null); // most recent invoice for child
+  const [attendanceStatus, setAttendanceStatus] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const TODAY = new Date().toISOString().split("T")[0];
 
   // Parent ID comes from logged-in user
   //const parentId = user?._id || user?.id;
@@ -32,18 +36,34 @@ const ParentDashboard = ({ setActiveTab, user }) => {
       const myChild = studentList[0];
       setChild(myChild);
 
-      // Load activities (optional)
+      // Load activities — backend auto-filters for parent's child
       try {
         const acts = await getActivities();
-        const filtered = acts.filter(a => a.studentId === myChild?._id);
-        setChildActivities(filtered);
+        setChildActivities(Array.isArray(acts) ? acts : []);
       } catch (_) {}
 
-      // Load payments (optional)
+      // Load today's attendance status for the child
+      if (myChild?._id) {
+        try {
+          const att = await getStudentAttendanceStatus(myChild._id, TODAY);
+          setAttendanceStatus(att?.status || "Not Recorded");
+        } catch (_) {
+          setAttendanceStatus("Not Recorded");
+        }
+      }
+
+      // Load invoices — backend auto-filters for parent's child via parentId→childStudentId
       try {
-        const pays = await getPayments();
-        const filtered = pays.find(p => p.studentId === myChild?._id);
-        setChildPayment(filtered);
+        const invoices = await getInvoices();
+        if (Array.isArray(invoices) && invoices.length > 0) {
+          // Sort by createdAt descending, pick the most recent unpaid first
+          const sorted = [...invoices].sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+          );
+          // Prefer the first unpaid/partial, otherwise just the latest
+          const unpaid = sorted.find(inv => inv.status === "unpaid" || inv.status === "partial");
+          setLatestInvoice(unpaid || sorted[0]);
+        }
       } catch (_) {}
 
     } catch (err) {
@@ -84,56 +104,104 @@ const ParentDashboard = ({ setActiveTab, user }) => {
 
       {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+        {/* Card 1 — Child's Attendance Today ✅ */}
         <DashboardCard
-          title="Today's Activities"
-          value={childActivities.length}
-          icon={Camera}
-          color="bg-accent"
+          title="Attendance Today"
+          value={
+            attendanceStatus === "Present" ? "✅ Present"
+            : attendanceStatus === "Absent" ? "❌ Absent"
+            : "— Not Recorded"
+          }
+          icon={
+            attendanceStatus === "Present" ? CheckCircle
+            : attendanceStatus === "Absent" ? XCircle
+            : Clock
+          }
+          color={
+            attendanceStatus === "Present" ? "bg-green-500"
+            : attendanceStatus === "Absent" ? "bg-red-500"
+            : "bg-gray-400"
+          }
           onClick={() => setActiveTab("child-activities")}
         />
 
+        {/* Card 2 — Progress Reports → progress ✅ */}
         <DashboardCard
-          title="Attendance Rate"
-          value="95%" // if you want real attendance I can build it
-          icon={CheckCircle}
-          color="bg-green-500"
-          onClick={() => setActiveTab("child-attendance")}
+          title="Progress Reports"
+          value="View"
+          icon={FileText}
+          color="bg-indigo-500"
+          onClick={() => setActiveTab("progress")}
         />
 
+        {/* Card 3 — Payment Status → payments ✅ */}
         <DashboardCard
           title="Payment Status"
-          value={childPayment?.status || "N/A"}
+          value={
+            !latestInvoice
+              ? "No Invoice"
+              : latestInvoice.status === "paid"
+              ? "✅ Paid"
+              : latestInvoice.status === "partial"
+              ? "⚠️ Partial"
+              : `Unpaid — RM${latestInvoice.amount ?? "—"}`
+          }
           icon={DollarSign}
           color={
-            childPayment?.status === "Paid" ? "bg-green-500" : "bg-yellow-500"
+            !latestInvoice
+              ? "bg-gray-400"
+              : latestInvoice.status === "paid"
+              ? "bg-green-500"
+              : latestInvoice.status === "partial"
+              ? "bg-amber-500"
+              : "bg-yellow-500"
           }
           onClick={() => setActiveTab("payments")}
         />
       </div>
 
-      {/* Today’s Activities */}
+      {/* Today's Activities preview */}
       <div className="bg-white p-6 rounded-xl shadow">
-        <h3 className="text-xl font-bold mb-4">Today's Activities</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-bold">Today's Activities</h3>
+          <button
+            onClick={() => setActiveTab("child-activities")}
+            className="text-sm text-indigo-600 font-semibold hover:underline"
+          >
+            View all →
+          </button>
+        </div>
 
-        {childActivities.length > 0 ? (
+        {childActivities.filter(a => a.date === TODAY).length > 0 ? (
           <div className="space-y-3">
-            {childActivities.map((act) => (
-              <div
-                key={act._id}
-                className="p-4 bg-indigo-50 rounded-lg border border-indigo-200"
-              >
-                <div className="flex justify-between">
-                  <div>
-                    <p className="font-semibold">{act.activity}</p>
-                    <p className="text-sm text-gray-600">{act.notes}</p>
+            {childActivities
+              .filter(a => a.date === TODAY)
+              .map((act) => (
+                <div
+                  key={act._id}
+                  className="p-4 bg-indigo-50 rounded-lg border border-indigo-200"
+                >
+                  <div className="flex justify-between">
+                    <div>
+                      <p className="font-semibold">{act.activity}</p>
+                      <p className="text-sm text-gray-600">{act.notes}</p>
+                    </div>
+                    <span className="text-xs text-indigo-600 shrink-0 ml-2">{act.time}</span>
                   </div>
-                  <span className="text-xs text-indigo-600">{act.time}</span>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         ) : (
-          <p className="text-center text-gray-500">No activities today</p>
+          <div className="text-center py-6">
+            <p className="text-gray-500">No activities recorded today.</p>
+            <button
+              onClick={() => setActiveTab("child-activities")}
+              className="mt-2 text-sm text-indigo-500 hover:underline"
+            >
+              View past activities →
+            </button>
+          </div>
         )}
       </div>
     </div>

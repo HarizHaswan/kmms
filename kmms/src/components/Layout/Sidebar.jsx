@@ -7,7 +7,6 @@ import {
   Camera,
   CheckCircle,
   DollarSign,
-  MessageSquare,
   BarChart,
   LogOut,
   Bell,
@@ -55,11 +54,9 @@ const Sidebar = ({
 
   const parentTabs = [
     { id: "timetables", label: "Child's Timetable", icon: Calendar },
-    //{ id: "child-activities", label: "Child Activities", icon: Camera }, // placeholder
-    //{ id: "child-attendance", label: "Attendance", icon: CheckCircle },  // placeholder
-    { id: "progress", label: "Progress Reports", icon: FileText },       // placeholder
+    { id: "child-activities", label: "Daily Activities", icon: Camera },
+    { id: "progress", label: "Progress Reports", icon: FileText },
     { id: "payments", label: "Payments", icon: DollarSign },
-    { id: "messages", label: "Messages", icon: MessageSquare },
     { id: "announcements", label: "Announcements", icon: Bell },
     { id: "settings", label: "Settings", icon: Settings },
   ];

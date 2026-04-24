@@ -1,84 +1,125 @@
-import React, { useContext, useState, useEffect } from "react";
-import { KMMSContext } from "../../context/KMMSContext";
+import React, { useState, useEffect } from "react";
 import {
-  Camera,
+  BookOpen,
   Users,
+  User,
   Trash2,
-  Upload,
-  Send
+  Send,
+  Loader2,
+  CheckCircle,
+  ChevronDown,
+  Clock,
+  Calendar,
 } from "lucide-react";
 
 import {
   getActivities,
   addActivityApi,
-  deleteActivityApi
+  blastActivityApi,
+  deleteActivityApi,
 } from "../../api/activities";
 
-const ActivitiesTracking = () => {
-  const { students } = useContext(KMMSContext);
+import { getStudents } from "../../api/students";
 
+const ActivitiesTracking = ({ user }) => {
+  const [students, setStudents] = useState([]);
   const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
   const [form, setForm] = useState({
-    studentId: "",
+    studentId: "", // "" = blast to all
     activity: "",
     notes: "",
   });
 
-  // Load activities for teacher's students
+  // ─── Load students & activities on mount ───────────────────────────────────
   useEffect(() => {
-    const loadData = async () => {
+    const loadAll = async () => {
+      setLoading(true);
       try {
-        const res = await getActivities();
-        // Show all activities for students in this teacher's class
-        const filtered = res.filter((a) =>
-          students.find((s) => s._id === a.studentId)
-        );
-        setActivities(filtered.reverse()); // recent first
-      } catch (error) {
-        console.error("Error loading activities:", error);
+        const [studentsData, activitiesData] = await Promise.all([
+          getStudents(),
+          getActivities(),
+        ]);
+        setStudents(Array.isArray(studentsData) ? studentsData : []);
+        setActivities(Array.isArray(activitiesData) ? activitiesData : []);
+      } catch (err) {
+        console.error("Error loading data:", err);
+        setErrorMsg("Failed to load data. Please refresh.");
+      } finally {
+        setLoading(false);
       }
     };
+    loadAll();
+  }, []);
 
-    loadData();
-  }, [students]);
+  // ─── Helpers ───────────────────────────────────────────────────────────────
+  const getTimestamp = () => {
+    const now = new Date();
+    return {
+      date: now.toISOString().split("T")[0],
+      time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+  };
 
+  const showSuccess = (msg) => {
+    setSuccessMsg(msg);
+    setTimeout(() => setSuccessMsg(""), 3500);
+  };
+
+  const showError = (msg) => {
+    setErrorMsg(msg);
+    setTimeout(() => setErrorMsg(""), 4000);
+  };
+
+  // ─── Form handlers ─────────────────────────────────────────────────────────
   const handleChange = (e) => {
-    setForm((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSave = async () => {
-    if (!form.studentId || !form.activity) return;
+    if (!form.activity.trim()) {
+      showError("Please enter an activity name.");
+      return;
+    }
 
-    const now = new Date();
-    const date = now.toISOString().split("T")[0];
-    const time = now.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    setSaving(true);
+    const { date, time } = getTimestamp();
 
     try {
-      const newRec = await addActivityApi({
-        studentId: form.studentId, // MongoDB _id
-        activity: form.activity,
-        notes: form.notes,
-        date,
-        time,
-      });
-
-      setActivities((prev) => [newRec, ...prev]);
+      if (form.studentId) {
+        // ── Single student ──────────────────────────────────────────────────
+        const newRec = await addActivityApi({
+          studentId: form.studentId,
+          activity: form.activity.trim(),
+          notes: form.notes.trim(),
+          date,
+          time,
+        });
+        setActivities((prev) => [newRec, ...prev]);
+        showSuccess("Activity recorded for student.");
+      } else {
+        // ── Blast to entire class ───────────────────────────────────────────
+        const newRecs = await blastActivityApi({
+          activity: form.activity.trim(),
+          notes: form.notes.trim(),
+          date,
+          time,
+        });
+        setActivities((prev) => [...(Array.isArray(newRecs) ? newRecs.reverse() : [newRecs]), ...prev]);
+        showSuccess(`Activity blasted to all ${students.length} students! 🎉`);
+      }
 
       // Reset form
-      setForm({
-        studentId: "",
-        activity: "",
-        notes: "",
-      });
-    } catch (error) {
-      console.error("Error saving activity:", error);
+      setForm({ studentId: "", activity: "", notes: "" });
+    } catch (err) {
+      console.error("Error saving activity:", err);
+      showError(err?.response?.data?.message || "Failed to save activity.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -86,119 +127,232 @@ const ActivitiesTracking = () => {
     try {
       await deleteActivityApi(id);
       setActivities((prev) => prev.filter((a) => a._id !== id));
-    } catch (error) {
-      console.error("Error deleting activity:", error);
+    } catch (err) {
+      console.error("Error deleting activity:", err);
+      showError("Failed to delete activity.");
     }
   };
 
+  // ─── Derived ───────────────────────────────────────────────────────────────
+  const isBlastMode = form.studentId === "";
+  const selectedStudent = students.find((s) => s._id === form.studentId);
+
+  // ─── Loading state ─────────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[300px] gap-4">
+        <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
+        <p className="text-gray-500 font-medium">Loading activities...</p>
+      </div>
+    );
+  }
+
+  // ─── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
       {/* Header */}
-      <h2 className="text-2xl font-bold text-gray-800">Daily Activities</h2>
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-indigo-100 rounded-xl">
+          <BookOpen className="w-6 h-6 text-indigo-600" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">Daily Activities</h2>
+          <p className="text-sm text-gray-500">
+            Record and track classroom activities for your students
+          </p>
+        </div>
+      </div>
+
+      {/* Toast messages */}
+      {successMsg && (
+        <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl text-green-800 animate-in slide-in-from-top-2 duration-300">
+          <CheckCircle className="w-5 h-5 text-green-600 shrink-0" />
+          <span className="font-medium">{successMsg}</span>
+        </div>
+      )}
+      {errorMsg && (
+        <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-800 animate-in slide-in-from-top-2 duration-300">
+          <span className="font-medium">{errorMsg}</span>
+        </div>
+      )}
 
       {/* Record Activity Form */}
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h3 className="text-lg font-bold mb-4">Record New Activity</h3>
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <h3 className="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2">
+          <Send className="w-5 h-5 text-indigo-500" />
+          Record New Activity
+        </h3>
 
-        <div className="space-y-3">
-          <select
-            name="studentId"
-            value={form.studentId}
-            onChange={handleChange}
-            className="w-full p-3 border rounded-lg"
-          >
-            <option value="">Select Student</option>
-            {students.map((s) => (
-              <option key={s._id} value={s._id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+        <div className="space-y-4">
+          {/* Student selector */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-600 mb-1.5">
+              Target
+            </label>
+            <div className="relative">
+              <select
+                name="studentId"
+                value={form.studentId}
+                onChange={handleChange}
+                className="w-full p-3 pr-10 border border-gray-200 rounded-xl appearance-none bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition"
+              >
+                <option value="">🔊 Blast to All Students ({students.length} students)</option>
+                {students.map((s) => (
+                  <option key={s._id} value={s._id}>
+                    👤 {s.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
 
-          <input
-            type="text"
-            name="activity"
-            placeholder="Activity name (e.g., Art Class, Reading Time)"
-            value={form.activity}
-            onChange={handleChange}
-            className="w-full p-3 border rounded-lg"
-          />
-
-          <textarea
-            name="notes"
-            placeholder="Notes or observations"
-            value={form.notes}
-            onChange={handleChange}
-            className="w-full p-3 border rounded-lg"
-            rows="3"
-          />
-
-          <div className="flex gap-2">
-            <button className="flex-1 p-3 bg-brand-bg text-gray-700 rounded-lg hover:bg-gray-200 flex items-center justify-center gap-2">
-              <Upload className="w-5 h-5" />
-              Upload Photo
-            </button>
-
-            <button
-              onClick={handleSave}
-              className="flex-1 p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
-            >
-              <Send className="w-5 h-5" />
-              Save Activity
-            </button>
+            {/* Target badge */}
+            <div className="mt-2">
+              {isBlastMode ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">
+                  <Users className="w-3.5 h-3.5" />
+                  Will send to all {students.length} students
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
+                  <User className="w-3.5 h-3.5" />
+                  Individual: {selectedStudent?.name}
+                </span>
+              )}
+            </div>
           </div>
+
+          {/* Activity name */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-600 mb-1.5">
+              Activity Name <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              name="activity"
+              placeholder="e.g. Art Class, Story Time, Outdoor Play..."
+              value={form.activity}
+              onChange={handleChange}
+              className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300 transition"
+            />
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-600 mb-1.5">
+              Notes / Observations
+            </label>
+            <textarea
+              name="notes"
+              placeholder="How did the activity go? Any observations?"
+              value={form.notes}
+              onChange={handleChange}
+              rows="3"
+              className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300 transition resize-none"
+            />
+          </div>
+
+          {/* Submit button */}
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className={`w-full p-3.5 rounded-xl font-semibold text-white flex items-center justify-center gap-2.5 transition-all duration-200 ${
+              isBlastMode
+                ? "bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-200"
+                : "bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-200"
+            } disabled:opacity-60 disabled:cursor-not-allowed`}
+          >
+            {saving ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                {isBlastMode ? "Blasting to all students..." : "Saving..."}
+              </>
+            ) : isBlastMode ? (
+              <>
+                <Users className="w-5 h-5" />
+                Blast to All {students.length} Students
+              </>
+            ) : (
+              <>
+                <Send className="w-5 h-5" />
+                Save Activity
+              </>
+            )}
+          </button>
         </div>
       </div>
 
       {/* Recent Activities */}
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h3 className="text-lg font-bold mb-4">Recent Activities</h3>
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <h3 className="text-lg font-bold text-gray-800 mb-5 flex items-center justify-between">
+          <span className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-indigo-500" />
+            Recent Activities
+          </span>
+          <span className="text-sm font-normal text-gray-400">
+            {activities.length} record{activities.length !== 1 ? "s" : ""}
+          </span>
+        </h3>
 
         <div className="space-y-3">
           {activities.length === 0 ? (
-            <p className="text-gray-500 text-center py-3">
-              No activities recorded.
-            </p>
+            <div className="text-center py-12">
+              <BookOpen className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+              <p className="text-gray-400 font-medium">No activities recorded yet.</p>
+              <p className="text-gray-300 text-sm mt-1">
+                Use the form above to record your first activity.
+              </p>
+            </div>
           ) : (
             activities.map((act) => {
-              const student = students.find(
-                (s) => s._id === act.studentId
-              );
+              const student = students.find((s) => s._id === act.studentId);
 
               return (
                 <div
                   key={act._id}
-                  className="p-4 bg-gradient-to-r from-brand-bg to-indigo-50 rounded-lg border border-blue-200"
+                  className="flex items-start justify-between gap-3 p-4 bg-gradient-to-r from-indigo-50/60 to-purple-50/40 rounded-xl border border-indigo-100 hover:shadow-sm transition-shadow"
                 >
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-start gap-3">
-                      <Camera className="w-5 h-5 text-indigo-600 mt-1" />
-
-                      <div>
-                        <p className="font-semibold text-indigo-900">
-                          {student?.name}
-                        </p>
-                        <p className="text-sm text-indigo-600 font-medium">
-                          {act.activity}
-                        </p>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {act.notes}
-                        </p>
-
-                        <p className="text-xs text-gray-500 mt-2">
-                          {act.date} • {act.time}
-                        </p>
-                      </div>
+                  <div className="flex items-start gap-3 min-w-0">
+                    {/* Avatar */}
+                    <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center shrink-0 text-indigo-600 font-bold text-sm">
+                      {student?.name?.[0]?.toUpperCase() ?? "?"}
                     </div>
 
-                    {/* Delete */}
-                    <button
-                      onClick={() => handleDelete(act._id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-indigo-900 truncate">
+                        {student?.name ?? (
+                          <span className="text-gray-400 italic">Unknown student</span>
+                        )}
+                      </p>
+                      <p className="text-sm font-medium text-indigo-600 mt-0.5">
+                        {act.activity}
+                      </p>
+                      {act.notes && (
+                        <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                          {act.notes}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-3 mt-2">
+                        <span className="flex items-center gap-1 text-xs text-gray-400">
+                          <Calendar className="w-3 h-3" />
+                          {act.date}
+                        </span>
+                        <span className="flex items-center gap-1 text-xs text-gray-400">
+                          <Clock className="w-3 h-3" />
+                          {act.time}
+                        </span>
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Delete */}
+                  <button
+                    onClick={() => handleDelete(act._id)}
+                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                    title="Delete activity"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               );
             })

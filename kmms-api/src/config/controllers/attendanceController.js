@@ -2,6 +2,50 @@ const Attendance = require("../models/Attendance");
 const Student = require("../models/Student");
 const { createNotificationsForUsers } = require("../../utils/notificationHelper");
 
+// GET Attendance status for a single student on a given date
+// Used by the parent dashboard card
+exports.getStudentAttendance = async (req, res, next) => {
+  try {
+    const { studentId } = req.params;
+    const { date } = req.query;
+
+    if (!studentId || !date) {
+      return res.status(400).json({ message: "studentId and date are required" });
+    }
+
+    // Find the student to get their classId
+    const student = await Student.findById(studentId).select("classId name");
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    // Look up the attendance record for that class on that date
+    const attendance = await Attendance.findOne({ date, classId: student.classId });
+
+    if (!attendance) {
+      return res.json({ status: "Not Recorded", date, studentId });
+    }
+
+    // Find this student's record in the class attendance
+    const record = attendance.records.find(
+      (r) => r.studentId && r.studentId.toString() === studentId
+    );
+
+    if (!record) {
+      return res.json({ status: "Not Recorded", date, studentId });
+    }
+
+    return res.json({
+      status: record.status,   // "Present" | "Absent"
+      reason: record.reason || "",
+      date,
+      studentId,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // GET Attendance for a specific Date and Class
 exports.getAttendance = async (req, res, next) => {
   try {
