@@ -12,7 +12,7 @@ export const addActivityApi = async (data) => {
   return res.data;
 };
 
-// BLAST activity to all students in teacher's class
+// BLAST activity to all active students in teacher's class
 export const blastActivityApi = async (data) => {
   const res = await http.post("/activities/blast", data);
   return res.data;
@@ -23,3 +23,14 @@ export const deleteActivityApi = async (id) => {
   const res = await http.delete(`/activities/${id}`);
   return res.data;
 };
+
+// UPLOAD a photo and return its URL (uses existing attachment upload endpoint)
+export const uploadActivityPhoto = async (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await http.post("/upload/attachment", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data.url; // e.g. "/uploads/attachments/attachment_123.jpg"
+};
+

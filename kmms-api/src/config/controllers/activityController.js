@@ -24,11 +24,11 @@ exports.getActivities = async (req, res) => {
       if (!classDoc) return res.json([]);
 
       const classStudents = await Student.find(
-        { classId: classDoc._id },
+        { classId: classDoc._id, status: "active" },  // active only
         "_id"
       );
       const studentIds = classStudents.map((s) => s._id);
-      query.studentId = { $in: studentIds };
+      query.studentId = { $in: studentIds }; 
     }
 
     // Parents only see their child's activities
@@ -49,7 +49,7 @@ exports.getActivities = async (req, res) => {
 // ADD a new activity (teacher only)
 exports.addActivity = async (req, res) => {
   try {
-    const { studentId, activity, notes, date, time } = req.body;
+    const { studentId, activity, notes, date, time, photos } = req.body;
 
     if (!studentId || !activity || !date || !time) {
       return res.status(400).json({ message: "Missing fields" });
@@ -61,7 +61,7 @@ exports.addActivity = async (req, res) => {
       notes,
       date,
       time,
-      photos: [],
+      photos: Array.isArray(photos) ? photos : (photos ? [photos] : []),
     });
 
     const saved = await newAct.save();
@@ -72,10 +72,10 @@ exports.addActivity = async (req, res) => {
   }
 };
 
-// BLAST activity to all students in the teacher's class
+// BLAST activity to all ACTIVE students in the teacher's class
 exports.blastActivity = async (req, res) => {
   try {
-    const { activity, notes, date, time } = req.body;
+    const { activity, notes, date, time, photos } = req.body;
 
     if (!activity || !date || !time) {
       return res.status(400).json({ message: "Missing fields" });
@@ -93,11 +93,17 @@ exports.blastActivity = async (req, res) => {
       return res.status(404).json({ message: "Assigned class not found" });
     }
 
-    const classStudents = await Student.find({ classId: classDoc._id }, "_id");
+    // ✅ Only active students
+    const classStudents = await Student.find(
+      { classId: classDoc._id, status: "active" },
+      "_id"
+    );
 
     if (classStudents.length === 0) {
-      return res.status(404).json({ message: "No students in class" });
+      return res.status(404).json({ message: "No active students in class" });
     }
+
+    const photoArr = Array.isArray(photos) ? photos : (photos ? [photos] : []);
 
     const newRecords = await Promise.all(
       classStudents.map((s) =>
@@ -107,7 +113,7 @@ exports.blastActivity = async (req, res) => {
           notes,
           date,
           time,
-          photos: [],
+          photos: photoArr,
         })
       )
     );

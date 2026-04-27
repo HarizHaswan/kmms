@@ -18,6 +18,8 @@ import {
 import { getActivities } from "../../api/activities";
 import { getStudents } from "../../api/students";
 
+const BASE_URL = "http://localhost:5000"; // backend base for serving uploaded files
+
 // ─── Helper: group activities by date ─────────────────────────────────────────
 const groupByDate = (activities) => {
   const groups = {};
@@ -388,6 +390,26 @@ const ParentActivities = ({ user }) => {
                                 <p className="text-sm text-gray-600 leading-relaxed">
                                   {act.notes}
                                 </p>
+                              </div>
+                            )}
+
+                            {/* Activity photos */}
+                            {act.photos && act.photos.length > 0 && (
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {act.photos.map((url, photoIdx) => (
+                                  <a
+                                    key={photoIdx}
+                                    href={`${BASE_URL}${url}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    <img
+                                      src={`${BASE_URL}${url}`}
+                                      alt={`Activity photo ${photoIdx + 1}`}
+                                      className="h-24 w-auto rounded-lg object-cover border border-white/60 shadow-sm hover:scale-105 transition-transform cursor-pointer"
+                                    />
+                                  </a>
+                                ))}
                               </div>
                             )}
                           </div>

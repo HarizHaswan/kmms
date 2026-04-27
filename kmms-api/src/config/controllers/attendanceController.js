@@ -22,8 +22,9 @@ exports.getStudentAttendance = async (req, res, next) => {
     // Look up the attendance record for that class on that date
     const attendance = await Attendance.findOne({ date, classId: student.classId });
 
+    // No attendance sheet saved for today → assume Present by default
     if (!attendance) {
-      return res.json({ status: "Not Recorded", date, studentId });
+      return res.json({ status: "Present", date, studentId });
     }
 
     // Find this student's record in the class attendance
@@ -31,8 +32,9 @@ exports.getStudentAttendance = async (req, res, next) => {
       (r) => r.studentId && r.studentId.toString() === studentId
     );
 
+    // Student not found in today's sheet → assume Present by default
     if (!record) {
-      return res.json({ status: "Not Recorded", date, studentId });
+      return res.json({ status: "Present", date, studentId });
     }
 
     return res.json({

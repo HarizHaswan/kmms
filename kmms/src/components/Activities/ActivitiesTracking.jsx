@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   BookOpen,
   Users,
@@ -10,6 +10,9 @@ import {
   ChevronDown,
   Clock,
   Calendar,
+  ImagePlus,
+  X,
+  Image,
 } from "lucide-react";
 
 import {
@@ -17,17 +20,26 @@ import {
   addActivityApi,
   blastActivityApi,
   deleteActivityApi,
+  uploadActivityPhoto,
 } from "../../api/activities";
 
 import { getStudents } from "../../api/students";
 
+const BASE_URL = "http://localhost:5000"; // backend base for serving static files
+
 const ActivitiesTracking = ({ user }) => {
-  const [students, setStudents] = useState([]);
+  const [students, setStudents] = useState([]);   // active students only
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Photo state
+  const [photoFile, setPhotoFile] = useState(null);       // File object
+  const [photoPreview, setPhotoPreview] = useState(null); // data-URL for preview
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef(null);
 
   const [form, setForm] = useState({
     studentId: "", // "" = blast to all
@@ -44,7 +56,12 @@ const ActivitiesTracking = ({ user }) => {
           getStudents(),
           getActivities(),
         ]);
-        setStudents(Array.isArray(studentsData) ? studentsData : []);
+
+        // ✅ Only show active students in the dropdown
+        const active = Array.isArray(studentsData)
+          ? studentsData.filter((s) => s.status === "active")
+          : [];
+        setStudents(active);
         setActivities(Array.isArray(activitiesData) ? activitiesData : []);
       } catch (err) {
         console.error("Error loading data:", err);
@@ -75,6 +92,26 @@ const ActivitiesTracking = ({ user }) => {
     setTimeout(() => setErrorMsg(""), 4000);
   };
 
+  // ─── Photo handlers ────────────────────────────────────────────────────────
+  const handlePhotoSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      showError("Please select an image file.");
+      return;
+    }
+    setPhotoFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setPhotoPreview(ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  const clearPhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   // ─── Form handlers ─────────────────────────────────────────────────────────
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -90,6 +127,21 @@ const ActivitiesTracking = ({ user }) => {
     const { date, time } = getTimestamp();
 
     try {
+      // Upload photo first if one is selected
+      let photoUrl = null;
+      if (photoFile) {
+        setUploadingPhoto(true);
+        try {
+          photoUrl = await uploadActivityPhoto(photoFile);
+        } catch (uploadErr) {
+          showError("Photo upload failed — activity will be saved without photo.");
+        } finally {
+          setUploadingPhoto(false);
+        }
+      }
+
+      const photos = photoUrl ? [photoUrl] : [];
+
       if (form.studentId) {
         // ── Single student ──────────────────────────────────────────────────
         const newRec = await addActivityApi({
@@ -98,23 +150,29 @@ const ActivitiesTracking = ({ user }) => {
           notes: form.notes.trim(),
           date,
           time,
+          photos,
         });
         setActivities((prev) => [newRec, ...prev]);
         showSuccess("Activity recorded for student.");
       } else {
-        // ── Blast to entire class ───────────────────────────────────────────
+        // ── Blast to all active students in class ───────────────────────────
         const newRecs = await blastActivityApi({
           activity: form.activity.trim(),
           notes: form.notes.trim(),
           date,
           time,
+          photos,
         });
-        setActivities((prev) => [...(Array.isArray(newRecs) ? newRecs.reverse() : [newRecs]), ...prev]);
-        showSuccess(`Activity blasted to all ${students.length} students! 🎉`);
+        setActivities((prev) => [
+          ...(Array.isArray(newRecs) ? [...newRecs].reverse() : [newRecs]),
+          ...prev,
+        ]);
+        showSuccess(`Activity blasted to all ${students.length} active students! 🎉`);
       }
 
-      // Reset form
+      // Reset form + photo
       setForm({ studentId: "", activity: "", notes: "" });
+      clearPhoto();
     } catch (err) {
       console.error("Error saving activity:", err);
       showError(err?.response?.data?.message || "Failed to save activity.");
@@ -196,7 +254,7 @@ const ActivitiesTracking = ({ user }) => {
                 onChange={handleChange}
                 className="w-full p-3 pr-10 border border-gray-200 rounded-xl appearance-none bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition"
               >
-                <option value="">🔊 Blast to All Students ({students.length} students)</option>
+                <option value="">🔊 Blast to All Active Students ({students.length} students)</option>
                 {students.map((s) => (
                   <option key={s._id} value={s._id}>
                     👤 {s.name}
@@ -211,7 +269,7 @@ const ActivitiesTracking = ({ user }) => {
               {isBlastMode ? (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">
                   <Users className="w-3.5 h-3.5" />
-                  Will send to all {students.length} students
+                  Will send to all {students.length} active students
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
@@ -252,10 +310,57 @@ const ActivitiesTracking = ({ user }) => {
             />
           </div>
 
+          {/* Photo upload */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-600 mb-1.5">
+              Activity Photo <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+
+            {photoPreview ? (
+              /* Preview + remove */
+              <div className="relative w-full rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+                <img
+                  src={photoPreview}
+                  alt="Preview"
+                  className="w-full max-h-56 object-cover"
+                />
+                <button
+                  onClick={clearPhoto}
+                  className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 text-white rounded-full transition"
+                  title="Remove photo"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <div className="absolute bottom-2 left-2 flex items-center gap-1.5 px-2 py-1 bg-black/50 text-white text-xs rounded-full">
+                  <Image className="w-3 h-3" />
+                  {photoFile?.name}
+                </div>
+              </div>
+            ) : (
+              /* Upload trigger */
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full flex items-center justify-center gap-3 p-4 border-2 border-dashed border-gray-200 rounded-xl text-gray-500 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50/50 transition-all duration-200"
+              >
+                <ImagePlus className="w-5 h-5" />
+                <span className="text-sm font-medium">Click to attach a photo</span>
+              </button>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoSelect}
+            />
+          </div>
+
           {/* Submit button */}
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || uploadingPhoto}
             className={`w-full p-3.5 rounded-xl font-semibold text-white flex items-center justify-center gap-2.5 transition-all duration-200 ${
               isBlastMode
                 ? "bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-200"
@@ -265,12 +370,12 @@ const ActivitiesTracking = ({ user }) => {
             {saving ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                {isBlastMode ? "Blasting to all students..." : "Saving..."}
+                {uploadingPhoto ? "Uploading photo..." : isBlastMode ? "Blasting to all students..." : "Saving..."}
               </>
             ) : isBlastMode ? (
               <>
                 <Users className="w-5 h-5" />
-                Blast to All {students.length} Students
+                Blast to All {students.length} Active Students
               </>
             ) : (
               <>
@@ -310,49 +415,72 @@ const ActivitiesTracking = ({ user }) => {
               return (
                 <div
                   key={act._id}
-                  className="flex items-start justify-between gap-3 p-4 bg-gradient-to-r from-indigo-50/60 to-purple-50/40 rounded-xl border border-indigo-100 hover:shadow-sm transition-shadow"
+                  className="p-4 bg-gradient-to-r from-indigo-50/60 to-purple-50/40 rounded-xl border border-indigo-100 hover:shadow-sm transition-shadow"
                 >
-                  <div className="flex items-start gap-3 min-w-0">
-                    {/* Avatar */}
-                    <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center shrink-0 text-indigo-600 font-bold text-sm">
-                      {student?.name?.[0]?.toUpperCase() ?? "?"}
-                    </div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3 min-w-0">
+                      {/* Avatar */}
+                      <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center shrink-0 text-indigo-600 font-bold text-sm">
+                        {student?.name?.[0]?.toUpperCase() ?? "?"}
+                      </div>
 
-                    <div className="min-w-0">
-                      <p className="font-semibold text-indigo-900 truncate">
-                        {student?.name ?? (
-                          <span className="text-gray-400 italic">Unknown student</span>
-                        )}
-                      </p>
-                      <p className="text-sm font-medium text-indigo-600 mt-0.5">
-                        {act.activity}
-                      </p>
-                      {act.notes && (
-                        <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                          {act.notes}
+                      <div className="min-w-0">
+                        <p className="font-semibold text-indigo-900 truncate">
+                          {student?.name ?? (
+                            <span className="text-gray-400 italic">Unknown student</span>
+                          )}
                         </p>
-                      )}
-                      <div className="flex items-center gap-3 mt-2">
-                        <span className="flex items-center gap-1 text-xs text-gray-400">
-                          <Calendar className="w-3 h-3" />
-                          {act.date}
-                        </span>
-                        <span className="flex items-center gap-1 text-xs text-gray-400">
-                          <Clock className="w-3 h-3" />
-                          {act.time}
-                        </span>
+                        <p className="text-sm font-medium text-indigo-600 mt-0.5">
+                          {act.activity}
+                        </p>
+                        {act.notes && (
+                          <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                            {act.notes}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-3 mt-2">
+                          <span className="flex items-center gap-1 text-xs text-gray-400">
+                            <Calendar className="w-3 h-3" />
+                            {act.date}
+                          </span>
+                          <span className="flex items-center gap-1 text-xs text-gray-400">
+                            <Clock className="w-3 h-3" />
+                            {act.time}
+                          </span>
+                        </div>
                       </div>
                     </div>
+
+                    {/* Delete */}
+                    <button
+                      onClick={() => handleDelete(act._id)}
+                      className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                      title="Delete activity"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
 
-                  {/* Delete */}
-                  <button
-                    onClick={() => handleDelete(act._id)}
-                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0"
-                    title="Delete activity"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {/* Activity photo(s) */}
+                  {act.photos && act.photos.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {act.photos.map((url, idx) => (
+                        <a
+                          key={idx}
+                          href={`${BASE_URL}${url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block"
+                        >
+                          <img
+                            src={`${BASE_URL}${url}`}
+                            alt={`Activity photo ${idx + 1}`}
+                            className="h-28 w-auto rounded-lg object-cover border border-indigo-100 hover:scale-105 transition-transform cursor-pointer shadow-sm"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })
