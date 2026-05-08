@@ -22,13 +22,13 @@ import {
 } from "../ui/table";
 
 // 1. Import the class API
-import { getClasses } from "../../api/classes"; 
+import { getClasses } from "../../api/classes";
 
 const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState(null);
   const [activeTab, setActiveTab] = useState("Active"); // "Active" | "Inactive"
-  
+
   // 2. State for storing classes fetched from DB
   const [availableClasses, setAvailableClasses] = useState([]);
 
@@ -134,7 +134,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-4 py-2">
-              
+
               {/* Full Name */}
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">Full Name</label>
@@ -162,7 +162,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                 />
               </div>
 
-                  {/* Password - Only for NEW teachers */}
+              {/* Password - Only for NEW teachers */}
               {!editingTeacher && (
                 <div className="space-y-1">
                   <label className="text-sm font-medium text-gray-700">Password</label>
@@ -191,7 +191,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                 />
               </div>
 
-              
+
 
               {/* Class Assigned - CHANGED TO DROPDOWN */}
               <div className="space-y-1">
@@ -312,11 +312,10 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`pb-2 px-4 text-sm font-medium transition-colors border-b-2 ${
-              activeTab === tab
+            className={`pb-2 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === tab
                 ? "border-primary text-primary"
                 : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
+              }`}
           >
             {tab} Teachers
           </button>

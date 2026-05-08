@@ -43,6 +43,7 @@ app.use("/api/timetables", require("./config/routes/timetableRoutes"));
 app.use("/api/attendance", require("./config/routes/attendanceRoutes"));
 app.use("/api/sick-leave", require("./config/routes/sickLeaveRoutes"));
 app.use("/api/salary", require("./config/routes/teacherSalaryRoutes"));
+app.use("/api/payroll", require("./config/routes/payrollRoutes"));
 
 // Health check
 app.get("/", (req, res) => {

@@ -30,6 +30,7 @@ const userSchema = new mongoose.Schema(
 
     // Teacher Fields
     phone: String,
+    icNumber: String,
     qualification: { type: String, enum: ["Diploma", "Degree"] },
     hireDate: Date,
     epfNo: String,
@@ -39,6 +40,30 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["Active", "Inactive"],
       default: "Active",
+    },
+
+    // Salary Profile
+    salaryProfile: {
+      baseSalary: { type: Number, default: 0 },
+      overtimeRate: { type: Number, default: 0 },
+      bankName: String,
+      bankAccountNo: String,
+      epfNo: String,
+      taxNo: String,
+      eisNo: String,
+      pcbNo: String,
+      // Default amounts for payroll generation
+      defaultStatutory: {
+        epf: { employer: { type: Number, default: 0 }, employee: { type: Number, default: 0 } },
+        socso: { employer: { type: Number, default: 0 }, employee: { type: Number, default: 0 } },
+        eis: { employer: { type: Number, default: 0 }, employee: { type: Number, default: 0 } },
+        pcb: { type: Number, default: 0 }
+      },
+      allowances: {
+        housing: { type: Number, default: 0 },
+        transport: { type: Number, default: 0 },
+        other: { type: Number, default: 0 },
+      }
     },
   },
   { timestamps: true }

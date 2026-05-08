@@ -9,6 +9,7 @@ export default function Messages({ user }) {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   
   const chatEndRef = useRef(null);
 
@@ -104,6 +105,11 @@ export default function Messages({ user }) {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const filteredUsers = users.filter(u => 
+    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (u.studentNames && u.studentNames.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   if (loading && !users.length) {
     return (
       <div className="flex items-center justify-center h-full pt-20">
@@ -119,18 +125,43 @@ export default function Messages({ user }) {
         <div className="p-4 border-b border-gray-200 bg-white">
           <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-purple-600" />
-            {user.role === "admin" ? "Monitor Chats" : "Messages"}
+          {user.role === "admin" ? "Monitor Chats" : "Messages"}
           </h2>
-          <p className="text-xs text-gray-500 mt-1">
-            {user.role === "admin" ? "Select a user to view their history" : "Select someone to chat with"}
+          <p className="text-xs text-gray-500 mt-1 mb-3">
+            {user.role === "admin" ? "Select a user to view history" : "Select someone to chat with"}
           </p>
+
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search users or children..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-200 focus:border-purple-400 outline-none transition-all"
+            />
+            <svg
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {users.length === 0 ? (
-            <p className="text-center text-sm text-gray-500 mt-10">No users found.</p>
+          {filteredUsers.length === 0 ? (
+            <p className="text-center text-sm text-gray-500 mt-10">
+              {searchTerm ? "No matches found." : "No users found."}
+            </p>
           ) : (
-            users.map((u) => (
+            filteredUsers.map((u) => (
               <button
                 key={u._id}
                 onClick={() => setSelectedUser(u)}
@@ -156,13 +187,9 @@ export default function Messages({ user }) {
                   <p className="font-semibold text-gray-900 truncate">{u.name}</p>
                   <p className="text-[11px] text-gray-500 capitalize truncate flex items-center gap-1">
                     <span className="font-medium text-purple-700">{u.role}</span> 
-                    {u.classAssigned && `• Class ${u.classAssigned}`}
+                    {u.role === "parent" && u.studentNames && ` • ${u.studentNames}`}
+                    {u.classAssigned && ` • Class ${u.classAssigned}`}
                   </p>
-                  {u.studentNames && (
-                    <p className="text-[10px] text-gray-400 truncate font-medium mt-0.5">
-                      Parent of: <span className="text-gray-600">{u.studentNames}</span>
-                    </p>
-                  )}
                 </div>
               </button>
             ))

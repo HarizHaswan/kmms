@@ -32,6 +32,8 @@ import {
 } from "../../api/feeTemplates";
 import { downloadFeeReceiptPdf, downloadInvoiceBillingPdf } from "../../utils/paymentReceiptPdf";
 
+const BASE_URL = "http://localhost:5000";
+
 const DEFAULT_INVOICE_FORM = {
   studentId: "",
   feeItem: "",
@@ -1273,11 +1275,11 @@ const PaymentManagement = ({ userId, role, user }) => {
               return new Date(Number(y), Number(mo) - 1, 1).toLocaleString("en-MY", { month: "short", year: "numeric" });
             };
 
-            // Sort alphabetically by student name
+            // Sort newest first
             const sortedInvoices = [...displayedInvoices].sort((a, b) => {
-              const nameA = getStudentName(a.studentId).toLowerCase();
-              const nameB = getStudentName(b.studentId).toLowerCase();
-              return nameA.localeCompare(nameB);
+              const dateA = new Date(a.createdAt || 0);
+              const dateB = new Date(b.createdAt || 0);
+              return dateB - dateA;
             });
 
             // Apply month filter
@@ -1391,6 +1393,7 @@ const PaymentManagement = ({ userId, role, user }) => {
                       <th className="px-6 py-4">Status</th>
                       <th className="px-6 py-4">Issued / Due</th>
                       <th className="px-6 py-4">Receipt</th>
+                      <th className="px-6 py-4">Paid Invoice</th>
                       <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -1410,7 +1413,7 @@ const PaymentManagement = ({ userId, role, user }) => {
                           <>
                             {pageSlice.length === 0 ? (
                               <tr>
-                                <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                                <td colSpan="9" className="px-6 py-8 text-center text-gray-500">
                                   {adminInvoiceSearch
                                     ? `No results for "${adminInvoiceSearch}".`
                                     : adminInvoiceFilter !== "all"
@@ -1448,7 +1451,7 @@ const PaymentManagement = ({ userId, role, user }) => {
                                     <td className="px-6 py-4">
                                       {withReceipt ? (
                                         <a
-                                          href={`http://localhost:5000${withReceipt.receiptUrl}`}
+                                          href={`${BASE_URL}${withReceipt.receiptUrl}`}
                                           target="_blank"
                                           rel="noopener noreferrer"
                                           className="inline-flex items-center gap-1.5 text-xs text-green-700 font-semibold bg-green-50 border border-green-200 px-2.5 py-1.5 rounded-lg hover:bg-green-100 transition"
@@ -1457,6 +1460,19 @@ const PaymentManagement = ({ userId, role, user }) => {
                                         </a>
                                       ) : (
                                         <span className="text-gray-400 text-xs italic">None</span>
+                                      )}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                      {invoice.status === "paid" ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => downloadInvoiceReceiptPdf(invoice, invoicePayments)}
+                                          className="inline-flex items-center gap-1 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1.5 rounded-lg hover:bg-indigo-100 transition"
+                                        >
+                                          <Download className="w-3 h-3" /> PDF Receipt
+                                        </button>
+                                      ) : (
+                                        <span className="text-gray-400 text-xs italic">Pending</span>
                                       )}
                                     </td>
                                     <td className="px-6 py-4 text-right">
@@ -1598,18 +1614,23 @@ const PaymentManagement = ({ userId, role, user }) => {
                           </div>
 
                           <div className="divide-y divide-amber-200 rounded-xl border border-amber-200 bg-white overflow-hidden">
-                            {outstanding.map((inv) => (
+                            {outstanding.map((inv, index) => (
                               <div key={inv._id} className="flex items-center justify-between px-4 py-3 text-sm">
-                                <div>
-                                  <p className="font-semibold text-gray-800">
-                                    {inv.feeItem || inv.category || "Fee"}
-                                  </p>
-                                  <p className="text-xs text-gray-500 mt-0.5">
-                                    {inv.category || "Uncategorized"} &middot;{" "}
-                                    {inv.dueDate
-                                      ? `Due ${new Date(inv.dueDate).toLocaleDateString()}`
-                                      : "No due date"}
-                                  </p>
+                                <div className="flex items-center gap-3">
+                                  <span className="text-xs font-bold text-amber-400 w-4">
+                                    {index + 1}.
+                                  </span>
+                                  <div>
+                                    <p className="font-semibold text-gray-800">
+                                      {inv.feeItem || inv.category || "Fee"}
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-0.5">
+                                      {inv.category || "Uncategorized"} &middot;{" "}
+                                      {inv.dueDate
+                                        ? `Due ${new Date(inv.dueDate).toLocaleDateString()}`
+                                        : "No due date"}
+                                    </p>
+                                  </div>
                                 </div>
                                 <div className="text-right">
                                   <p className="font-bold text-gray-900">
@@ -1682,21 +1703,28 @@ const PaymentManagement = ({ userId, role, user }) => {
                           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
                             Cleared Invoices
                           </p>
-                          {paid.map((inv) => (
-                            <div
-                              key={inv._id}
-                              className="flex items-center justify-between rounded-xl border border-gray-100 bg-white px-4 py-3 text-sm hover:bg-gray-50 transition"
-                            >
-                              <div>
-                                <p className="font-semibold text-gray-800">
-                                  {inv.feeItem || inv.category || "Fee"}
-                                </p>
-                                <p className="text-xs text-gray-500 mt-0.5">
-                                  {inv.category} &middot;{" "}
-                                  {new Date(inv.createdAt).toLocaleDateString()}
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-3">
+                          {paid
+                            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                            .map((inv, index) => (
+                              <div
+                                key={inv._id}
+                                className="flex items-center justify-between rounded-xl border border-gray-100 bg-white px-4 py-3 text-sm hover:bg-gray-50 transition"
+                              >
+                                <div className="flex items-center gap-4">
+                                  <span className="text-xs font-bold text-gray-400 w-5">
+                                    {index + 1}.
+                                  </span>
+                                  <div>
+                                    <p className="font-semibold text-gray-800">
+                                      {inv.feeItem || inv.category || "Fee"}
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-0.5">
+                                      {inv.category} &middot;{" "}
+                                      {new Date(inv.createdAt).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-3">
                                 <p className="font-bold text-gray-900">
                                   RM {formatMoney(inv.amount)}
                                 </p>
@@ -1796,12 +1824,12 @@ const PaymentManagement = ({ userId, role, user }) => {
                         <td className="px-5 py-4">
                           {p.receiptUrl ? (
                             <a
-                              href={p.receiptUrl}
+                              href={`${BASE_URL}${p.receiptUrl}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1.5 rounded-lg hover:bg-indigo-100 transition"
                             >
-                              <Paperclip className="w-3 h-3" /> View
+                              <Paperclip className="w-3.5 h-3.5" /> View
                             </a>
                           ) : (
                             <span className="text-gray-400 text-xs">No receipt</span>
@@ -1883,7 +1911,7 @@ const PaymentManagement = ({ userId, role, user }) => {
                     <td className="px-6 py-4">
                       {payment.receiptUrl ? (
                         <a
-                          href={`http://localhost:5000${payment.receiptUrl}`}
+                          href={`${BASE_URL}${payment.receiptUrl}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium bg-indigo-50 px-2.5 py-1.5 rounded-lg"

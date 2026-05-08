@@ -48,6 +48,8 @@ exports.createTeacher = async (req, res) => {
       hireDate,
       epfNo,
       taxNo,
+      icNumber,
+      salaryProfile: req.body.salaryProfile || {},
       status: status || "Active",
     });
 

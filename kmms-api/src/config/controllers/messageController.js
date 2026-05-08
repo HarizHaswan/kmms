@@ -98,7 +98,26 @@ const getUsersForMessaging = async (req, res, next) => {
     const studentMap = {};
     
     if (req.user.role === "admin") {
-      query = { role: { $in: ["teacher", "parent"] } };
+      const Student = require("../models/Student");
+      const activeStudents = await Student.find({ 
+        status: { $regex: /^active$/i } 
+      }).select("parentId name");
+      
+      activeStudents.forEach(s => {
+        if (s.parentId) {
+          const pid = s.parentId.toString();
+          activeParentIds.push(pid);
+          if (!studentMap[pid]) studentMap[pid] = [];
+          studentMap[pid].push(s.name);
+        }
+      });
+
+      query = { 
+        $or: [
+          { _id: { $in: activeParentIds }, role: "parent" },
+          { role: "teacher", status: "Active" }
+        ]
+      };
     } else if (req.user.role === "teacher") {
       const Student = require("../models/Student");
       const Class = require("../models/Class");
