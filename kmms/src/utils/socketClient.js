@@ -5,8 +5,8 @@ let socket = null;
 
 export function initSocket() {
   if (socket) return socket;
-  const token = localStorage.getItem('token'); // or wherever you store JWT
-  socket = io(process.env.REACT_APP_API_URL || '/', {
+  const token = localStorage.getItem('kmms-token');
+  socket = io('http://localhost:5000', {
     // pass token in handshake auth
     auth: {
       token: token ? `Bearer ${token}` : ''

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Plus, Edit, Search, GraduationCap } from "lucide-react";
+import { Plus, Edit, Search, GraduationCap, CheckCircle, X } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
@@ -30,7 +30,7 @@ const StudentList = ({
   onAddClass,
   onApprove,
   onReject,
-  userRole = "admin", // <--- 1. Added userRole prop (Default is 'admin')
+  userRole = "admin",
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterAgeGroup, setFilterAgeGroup] = useState("all");
@@ -62,7 +62,6 @@ const StudentList = ({
     yearGroup: "",
   });
 
-  // Helper to safely get age (uses DB age or calculates from DOB)
   const getStudentAge = (student) => {
     if (student.age) return Number(student.age);
     if (student.dateOfBirth) {
@@ -78,22 +77,17 @@ const StudentList = ({
     return 0;
   };
 
-  // --- Filtering & search ---
   const filteredStudents = students.filter((student) => {
-    // 1. CURRENT vs HISTORY filter
     if (studentView === "current" && (student.status === "graduated" || student.status === "withdrawn" || student.status === "pending")) {
       return false;
     }
-
     if (studentView === "history" && (student.status === "active" || student.status === "pending")) {
       return false;
     }
-
     if (studentView === "pending" && student.status !== "pending") {
       return false;
     }
 
-    // History year/month filter
     if (studentView === "history") {
       const regDate = student.registrationDate ? new Date(student.registrationDate) : null;
       if (historyYear !== "all") {
@@ -104,7 +98,6 @@ const StudentList = ({
       }
     }
 
-    // 2. Search filter
     const q = searchQuery.toLowerCase();
     const studentName = student.name?.toLowerCase() || "";
     const className = student.classId?.className?.toLowerCase() || "";
@@ -116,13 +109,11 @@ const StudentList = ({
       className.includes(q) ||
       parentName.includes(q);
 
-    // 3. Age filter
     const studentAge = getStudentAge(student);
     const matchesAgeFilter =
       filterAgeGroup === "all" ||
       Number(filterAgeGroup) === studentAge;
 
-    // 4. Class filter
     const studentClassId = typeof student.classId === 'object' ? student.classId?._id : student.classId;
     const matchesClassFilter =
       filterClass === "all" ||
@@ -131,7 +122,6 @@ const StudentList = ({
     return matchesSearch && matchesAgeFilter && matchesClassFilter;
   }).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
-  // --- Stats cards ---
   const stats = useMemo(
     () => ({
       total: students.filter(s => s.status === "active").length,
@@ -142,10 +132,8 @@ const StudentList = ({
     [students]
   );
 
-  // --- Add student submit handler ---
   const handleAddSubmit = async (e) => {
     e.preventDefault();
-
     const payload = {
       name: formData.name,
       dateOfBirth: formData.dateOfBirth,
@@ -168,50 +156,44 @@ const StudentList = ({
       } else {
         await onAdd(payload);
       }
+      setFormData({
+        name: "",
+        dateOfBirth: "",
+        gender: "",
+        classId: "",
+        parentName: "",
+        parentIcNumber: "",
+        parentPhoneNumber: "",
+        homeAddress: "",
+        parentEmail: "",
+        parentPassword: "",
+        status: "active",
+      });
+      setEditingStudent(null);
+      setIsAddDialogOpen(false);
+      setIsExistingParent(false);
     } catch (err) {
       console.error("Form submission failed:", err);
-      return; // Stop execution on error
     }
-
-    // Reset state
-    setFormData({
-      name: "",
-      dateOfBirth: "",
-      gender: "",
-      classId: "",
-      parentName: "",
-      parentIcNumber: "",
-      parentPhoneNumber: "",
-      homeAddress: "",
-      parentEmail: "",
-      parentPassword: "",
-      status: "active",
-    });
-    setEditingStudent(null);
-    setIsAddDialogOpen(false);
-    setIsExistingParent(false);
   };
 
   const getStatusBadge = (status) => {
     const statusStyles = {
-      active: "bg-green-100 text-green-700",
-      graduated: "bg-accent-light text-accent-dark",
-      withdrawn: "bg-red-100 text-red-700",
-      pending: "bg-yellow-100 text-yellow-700"
+      active: "bg-green-100 text-green-700 border-green-200",
+      graduated: "bg-blue-100 text-blue-700 border-blue-200",
+      withdrawn: "bg-red-100 text-red-700 border-red-200",
+      pending: "bg-yellow-100 text-yellow-700 border-yellow-200"
     };
-    return statusStyles[status] || statusStyles.active;
+    return statusStyles[status] || "bg-gray-100 text-gray-700 border-gray-200";
   };
 
   const handleAddClassSubmit = async (e) => {
     e.preventDefault();
-
     try {
       await onAddClass({
         className: classFormData.className,
         yearGroup: classFormData.yearGroup,
       });
-
-      // Reset form
       setClassFormData({
         className: "",
         yearGroup: "",
@@ -223,42 +205,43 @@ const StudentList = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10 animate-in fade-in duration-700 pb-10 font-inter">
       {/* HEADER + ADD BUTTONS */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-gray-900 text-xl font-bold">
+          <h2 className="text-3xl font-bold text-brand-text font-poppins tracking-tight">
             Student Management
           </h2>
-          <p className="text-gray-600 text-sm">
-            Manage all students and their information
+          <p className="text-brand-textSecondary mt-1 font-medium italic">
+            Manage your kindergarten's student records and enrollments.
           </p>
         </div>
 
-        {/* --- 2. HIDE BUTTONS FOR NON-ADMINS --- */}
         {userRole === "admin" && (
-          <div className="flex gap-3">
-            {/* Add Class Button */}
+          <div className="flex gap-4">
             <Dialog open={isAddClassDialogOpen} onOpenChange={setIsAddClassDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="flex items-center gap-2 bg-primary hover:bg-primary-dark">
-                  <Plus className="w-4 h-4" />
-                  Add Class
+                <Button className="flex items-center gap-2 bg-secondary hover:bg-secondary-dark text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-secondary/20 transition-all active:scale-95">
+                  <Plus className="w-5 h-5" />
+                  New Class
                 </Button>
               </DialogTrigger>
 
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Add New Class</DialogTitle>
-                </DialogHeader>
+              <DialogContent className="max-w-md rounded-[2.5rem] border-none shadow-premium p-0 overflow-hidden">
+                <div className="bg-gradient-to-r from-secondary to-secondary-dark p-8 text-white">
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl font-bold font-poppins">Add New Class</DialogTitle>
+                    <p className="text-white/80 text-sm font-medium">Create a new learning group.</p>
+                  </DialogHeader>
+                </div>
 
-                <form onSubmit={handleAddClassSubmit} className="space-y-4 py-2">
-                  {/* Class Name */}
+                <form onSubmit={handleAddClassSubmit} className="p-8 space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-bold text-brand-textSecondary uppercase tracking-widest mb-2">
                       Class Name *
                     </label>
-                    <Input
+                    <input
+                      className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all placeholder:text-brand-textSecondary/50 font-medium"
                       placeholder="e.g., 4A, 5B, 6C"
                       value={classFormData.className}
                       onChange={(e) =>
@@ -266,18 +249,14 @@ const StudentList = ({
                       }
                       required
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Enter the class name (e.g., 4A for age 4 class A)
-                    </p>
                   </div>
 
-                  {/* Year Group (Age) */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-bold text-brand-textSecondary uppercase tracking-widest mb-2">
                       Year Group (Age) *
                     </label>
                     <select
-                      className="border rounded-lg p-2 w-full"
+                      className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all appearance-none cursor-pointer font-bold"
                       value={classFormData.yearGroup}
                       onChange={(e) =>
                         setClassFormData({ ...classFormData, yearGroup: e.target.value })
@@ -291,409 +270,247 @@ const StudentList = ({
                     </select>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex gap-3 pt-2">
                     <Button
                       type="button"
-                      className="flex-1 bg-brand-bg text-gray-800 hover:bg-gray-200"
-                      onClick={() => {
-                        setIsAddClassDialogOpen(false);
-                        setClassFormData({
-                          className: "",
-                          yearGroup: "",
-                        });
-                      }}
+                      variant="ghost"
+                      className="flex-1 rounded-2xl font-bold text-brand-textSecondary hover:bg-brand-bg"
+                      onClick={() => setIsAddClassDialogOpen(false)}
                     >
                       Cancel
                     </Button>
-                    <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700">
-                      Save Class
+                    <Button type="submit" className="flex-1 bg-secondary hover:bg-secondary-dark text-white rounded-2xl font-bold shadow-lg shadow-secondary/20">
+                      Create Class
                     </Button>
                   </div>
                 </form>
               </DialogContent>
             </Dialog>
 
-            {/* Add Student Button */}
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="flex items-center gap-2 bg-primary hover:bg-primary-dark">
-                  <Plus className="w-4 h-4" />
+                <Button className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-primary/20 transition-all active:scale-95">
+                  <Plus className="w-5 h-5" />
                   Add Student
                 </Button>
               </DialogTrigger>
 
-              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingStudent ? "Edit Student" : "Add New Student"}
-                  </DialogTitle>
-                </DialogHeader>
+              <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] border-none shadow-premium p-0 scrollbar-hide">
+                 <div className="bg-gradient-to-r from-primary to-primary-dark p-8 text-white sticky top-0 z-10">
+                    <DialogHeader>
+                      <DialogTitle className="text-2xl font-bold font-poppins">
+                        {editingStudent ? "Edit Student Record" : "Enroll New Student"}
+                      </DialogTitle>
+                      <p className="text-white/80 text-sm font-medium">Please fill in the details below.</p>
+                    </DialogHeader>
+                 </div>
 
-                <form onSubmit={handleAddSubmit} className="space-y-4 py-2">
-                  {/* Full Name */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Full Name *
-                    </label>
-                    <Input
-                      placeholder="Enter full name"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-
-                  {/* Date of Birth */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Date of Birth *
-                    </label>
-                    <Input
-                      type="date"
-                      value={formData.dateOfBirth}
-                      onChange={(e) =>
-                        setFormData({ ...formData, dateOfBirth: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-
-                  {/* Gender */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Gender *
-                    </label>
-                    <select
-                      className="border rounded-lg p-2 w-full"
-                      value={formData.gender}
-                      onChange={(e) =>
-                        setFormData({ ...formData, gender: e.target.value })
-                      }
-                      required
-                    >
-                      <option value="">Select Gender</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                    </select>
-                  </div>
-
-                  {/* Class */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Class *
-                    </label>
-                    <select
-                      className="border rounded-lg p-2 w-full"
-                      value={formData.classId}
-                      onChange={(e) =>
-                        setFormData({ ...formData, classId: e.target.value })
-                      }
-                      required
-                    >
-                      <option value="">Select Class</option>
-                      {classes.map((c) => (
-                        <option key={c._id} value={c._id}>
-                          {c.name || c.className}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Parent Section Headers/Toggles */}
-                  {!editingStudent && (
-                    <div className="bg-white p-4 rounded-lg border border-gray-200 mt-6 mb-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-semibold text-gray-800">Parent Details</h3>
-                        <div className="flex items-center gap-2">
-                          <label className="text-xs font-semibold text-gray-600">Existing Parent?</label>
-                          <button
-                            type="button"
-                            onClick={() => setIsExistingParent(!isExistingParent)}
-                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 ${
-                              isExistingParent ? 'bg-indigo-600' : 'bg-gray-200'
-                            }`}
-                          >
-                            <span className="sr-only">Toggle existing parent</span>
-                            <span
-                              aria-hidden="true"
-                              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                isExistingParent ? 'translate-x-5' : 'translate-x-0'
-                              }`}
-                            />
-                          </button>
-                        </div>
-                      </div>
-
-                      {isExistingParent ? (
-                        <div className="space-y-4">
+                 <form onSubmit={handleAddSubmit} className="p-8 space-y-8">
+                    <div className="space-y-4">
+                       <h4 className="text-xs font-extrabold text-primary uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                          <div className="h-1 w-6 bg-primary rounded-full"></div>
+                          Child's Information
+                       </h4>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Registered Parent Email *
-                            </label>
-                            <Input
-                              type="email"
-                              placeholder="Enter parent's exact registered email"
-                              value={formData.parentEmail}
-                              onChange={(e) =>
-                                setFormData({ ...formData, parentEmail: e.target.value })
-                              }
+                            <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Full Name *</label>
+                            <input
+                              className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
+                              placeholder="Student's name"
+                              value={formData.name}
+                              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                               required
                             />
-                            <p className="text-xs text-gray-500 mt-1">
-                              The system will link this new student to the existing parent associated with this email.
-                            </p>
                           </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Date of Birth *</label>
+                            <input
+                              type="date"
+                              className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
+                              value={formData.dateOfBirth}
+                              onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                              required
+                            />
+                          </div>
+                       </div>
 
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Parent IC Number
-                            </label>
-                            <Input
-                              placeholder="e.g., 900101-01-1234"
-                              value={formData.parentIcNumber}
-                              onChange={(e) =>
-                                setFormData({ ...formData, parentIcNumber: e.target.value })
-                              }
-                            />
+                            <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Gender *</label>
+                            <select
+                              className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-bold appearance-none cursor-pointer"
+                              value={formData.gender}
+                              onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                              required
+                            >
+                              <option value="">Select Gender</option>
+                              <option value="Male">Male</option>
+                              <option value="Female">Female</option>
+                            </select>
                           </div>
-
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Parent Phone Number
-                            </label>
-                            <Input
-                              placeholder="e.g., 012-3456789"
-                              value={formData.parentPhoneNumber}
-                              onChange={(e) =>
-                                setFormData({ ...formData, parentPhoneNumber: e.target.value })
-                              }
-                            />
+                            <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Assigned Class *</label>
+                            <select
+                              className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-bold appearance-none cursor-pointer"
+                              value={formData.classId}
+                              onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
+                              required
+                            >
+                              <option value="">Select Class</option>
+                              {classes.map((c) => (
+                                <option key={c._id} value={c._id}>{c.name || c.className}</option>
+                              ))}
+                            </select>
                           </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Home Address
-                            </label>
-                            <textarea
-                              className="border rounded-lg p-2 w-full text-sm"
-                              rows={3}
-                              placeholder="Enter home address"
-                              value={formData.homeAddress}
-                              onChange={(e) =>
-                                setFormData({ ...formData, homeAddress: e.target.value })
-                              }
-                            />
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          {/* Parent Name */}
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Parent Name *
-                            </label>
-                            <Input
-                              placeholder="Enter parent's full name"
-                              value={formData.parentName}
-                              onChange={(e) =>
-                                setFormData({ ...formData, parentName: e.target.value })
-                              }
-                              required={!isExistingParent}
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Parent IC Number
-                            </label>
-                            <Input
-                              placeholder="e.g., 900101-01-1234"
-                              value={formData.parentIcNumber}
-                              onChange={(e) =>
-                                setFormData({ ...formData, parentIcNumber: e.target.value })
-                              }
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Parent Phone Number
-                            </label>
-                            <Input
-                              placeholder="e.g., 012-3456789"
-                              value={formData.parentPhoneNumber}
-                              onChange={(e) =>
-                                setFormData({ ...formData, parentPhoneNumber: e.target.value })
-                              }
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Home Address
-                            </label>
-                            <textarea
-                              className="border rounded-lg p-2 w-full text-sm"
-                              rows={3}
-                              placeholder="Enter home address"
-                              value={formData.homeAddress}
-                              onChange={(e) =>
-                                setFormData({ ...formData, homeAddress: e.target.value })
-                              }
-                            />
-                          </div>
-
-                          {/* Parent Email (for registration) */}
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Parent Email (for login) *
-                            </label>
-                            <Input
-                              type="email"
-                              placeholder="parent@example.com"
-                              value={formData.parentEmail}
-                              onChange={(e) =>
-                                setFormData({ ...formData, parentEmail: e.target.value })
-                              }
-                              required={!isExistingParent}
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Parent Password (for login) *
-                            </label>
-                            <Input
-                              type="password"
-                              placeholder="Enter password for new parent account"
-                              value={formData.parentPassword}
-                              onChange={(e) =>
-                                setFormData({ ...formData, parentPassword: e.target.value })
-                              }
-                              required={!isExistingParent}
-                            />
-                          </div>
-                        </div>
-                      )}
+                       </div>
                     </div>
-                  )}
 
-                  {/* If editing, just show parent name as a regular field (can't easily re-link here) */}
-                  {editingStudent && (
                     <div className="space-y-4">
-                      {/* Parent Name */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Parent Name *
-                        </label>
-                        <Input
-                          placeholder="Enter parent's full name"
-                          value={formData.parentName}
-                          onChange={(e) =>
-                            setFormData({ ...formData, parentName: e.target.value })
-                          }
-                          required
-                        />
-                      </div>
+                       <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-xs font-extrabold text-secondary-dark uppercase tracking-[0.2em] flex items-center gap-2">
+                             <div className="h-1 w-6 bg-secondary rounded-full"></div>
+                             Parent / Guardian Details
+                          </h4>
+                          {!editingStudent && (
+                             <div className="flex items-center gap-2 bg-brand-bg px-3 py-1.5 rounded-xl border border-gray-100">
+                                <span className="text-[10px] font-bold text-brand-textSecondary uppercase">Existing Parent?</span>
+                                <input 
+                                  type="checkbox" 
+                                  className="w-4 h-4 text-primary rounded focus:ring-primary cursor-pointer"
+                                  checked={isExistingParent}
+                                  onChange={() => setIsExistingParent(!isExistingParent)}
+                                />
+                             </div>
+                          )}
+                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Parent IC Number
-                        </label>
-                        <Input
-                          placeholder="e.g., 900101-01-1234"
-                          value={formData.parentIcNumber}
-                          onChange={(e) =>
-                            setFormData({ ...formData, parentIcNumber: e.target.value })
-                          }
-                        />
-                      </div>
+                       {isExistingParent ? (
+                          <div className="p-4 bg-secondary/5 rounded-2xl border border-secondary/10 space-y-4">
+                             <div>
+                                <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5">Registered Parent Email *</label>
+                                <input
+                                  type="email"
+                                  className="w-full px-4 py-3 bg-white border border-transparent rounded-2xl shadow-sm focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all font-medium"
+                                  placeholder="Enter exact registered email"
+                                  value={formData.parentEmail}
+                                  onChange={(e) => setFormData({ ...formData, parentEmail: e.target.value })}
+                                  required
+                                />
+                             </div>
+                          </div>
+                       ) : (
+                          <div className="space-y-4">
+                             <div>
+                                <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Parent Full Name *</label>
+                                <input
+                                  className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
+                                  placeholder="Guardian name"
+                                  value={formData.parentName}
+                                  onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
+                                  required={!editingStudent}
+                                />
+                             </div>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                   <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">IC / Passport Number</label>
+                                   <input
+                                     className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
+                                     placeholder="900101-01-XXXX"
+                                     value={formData.parentIcNumber}
+                                     onChange={(e) => setFormData({ ...formData, parentIcNumber: e.target.value })}
+                                   />
+                                </div>
+                                <div>
+                                   <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Phone Number</label>
+                                   <input
+                                     className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
+                                     placeholder="012-XXXXXXX"
+                                     value={formData.parentPhoneNumber}
+                                     onChange={(e) => setFormData({ ...formData, parentPhoneNumber: e.target.value })}
+                                   />
+                                </div>
+                             </div>
+                             
+                             {!editingStudent && (
+                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                     <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Login Email *</label>
+                                     <input
+                                       type="email"
+                                       className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
+                                       placeholder="parent@example.com"
+                                       value={formData.parentEmail}
+                                       onChange={(e) => setFormData({ ...formData, parentEmail: e.target.value })}
+                                       required
+                                     />
+                                  </div>
+                                  <div>
+                                     <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Temporary Password *</label>
+                                     <input
+                                       type="password"
+                                       className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
+                                       placeholder="Set portal password"
+                                       value={formData.parentPassword}
+                                       onChange={(e) => setFormData({ ...formData, parentPassword: e.target.value })}
+                                       required
+                                     />
+                                  </div>
+                               </div>
+                             )}
+                          </div>
+                       )}
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Parent Phone Number
-                        </label>
-                        <Input
-                          placeholder="e.g., 012-3456789"
-                          value={formData.parentPhoneNumber}
-                          onChange={(e) =>
-                            setFormData({ ...formData, parentPhoneNumber: e.target.value })
-                          }
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Home Address
-                        </label>
-                        <textarea
-                          className="border rounded-lg p-2 w-full text-sm"
-                          rows={3}
-                          placeholder="Enter home address"
-                          value={formData.homeAddress}
-                          onChange={(e) =>
-                            setFormData({ ...formData, homeAddress: e.target.value })
-                          }
-                        />
-                      </div>
+                       <div>
+                          <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Home Address</label>
+                          <textarea
+                            className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium resize-none"
+                            rows={3}
+                            placeholder="Enter home address"
+                            value={formData.homeAddress}
+                            onChange={(e) => setFormData({ ...formData, homeAddress: e.target.value })}
+                          />
+                       </div>
                     </div>
-                  )}
 
-                  {/* Status (only show when editing) */}
-                  {editingStudent && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Status *
-                      </label>
-                      <select
-                        className="border rounded-lg p-2 w-full"
-                        value={formData.status}
-                        onChange={(e) =>
-                          setFormData({ ...formData, status: e.target.value })
-                        }
-                        required
+                    {editingStudent && (
+                       <div className="pt-4 border-t border-gray-100">
+                          <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-2 ml-1">Enrollment Status</label>
+                          <div className="flex gap-4">
+                             {['active', 'graduated', 'withdrawn'].map(status => (
+                                <button
+                                  key={status}
+                                  type="button"
+                                  onClick={() => setFormData({ ...formData, status })}
+                                  className={`flex-1 py-3 px-4 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${
+                                     formData.status === status 
+                                     ? 'bg-primary text-white shadow-lg shadow-primary/20' 
+                                     : 'bg-brand-bg text-brand-textSecondary hover:bg-gray-200'
+                                  }`}
+                                >
+                                   {status}
+                                </button>
+                             ))}
+                          </div>
+                       </div>
+                    )}
+
+                    <div className="flex gap-3 pt-6">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="flex-1 rounded-2xl font-bold text-brand-textSecondary hover:bg-brand-bg h-14"
+                        onClick={() => {
+                          setIsAddDialogOpen(false);
+                          setEditingStudent(null);
+                        }}
                       >
-                        <option value="active">Active</option>
-                        <option value="graduated">Graduated</option>
-                        <option value="withdrawn">Withdrawn</option>
-                      </select>
+                        Cancel
+                      </Button>
+                      <Button type="submit" className="flex-1 bg-primary hover:bg-primary-dark text-white rounded-2xl font-bold shadow-lg shadow-primary/20 h-14 text-lg">
+                        {editingStudent ? "Update Record" : "Enroll Student"}
+                      </Button>
                     </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      type="button"
-                      className="flex-1 bg-brand-bg text-gray-800 hover:bg-gray-200"
-                      onClick={() => {
-                        setIsAddDialogOpen(false);
-                        setEditingStudent(null);
-                        setFormData({
-                          name: "",
-                          dateOfBirth: "",
-                          gender: "",
-                          classId: "",
-                          parentName: "",
-                          parentIcNumber: "",
-                          parentPhoneNumber: "",
-                          homeAddress: "",
-                          parentEmail: "",
-                          parentPassword: "",
-                          status: "active",
-                        });
-                        setIsExistingParent(false);
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button type="submit" className="flex-1">
-                      {editingStudent ? "Update" : "Save"}
-                    </Button>
-                  </div>
-                </form>
+                 </form>
               </DialogContent>
             </Dialog>
           </div>
@@ -701,63 +518,60 @@ const StudentList = ({
       </div>
 
       {/* STATS CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Students</p>
-              <h3 className="text-lg text-black-600">{stats.total}</h3>
-            </div>
-            <GraduationCap className="w-10 h-10 text-gray-400" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">4 Years</p>
-              <h3 className="text-lg text-accent">{stats.age4}</h3>
-            </div>
-            <div className="w-10 h-10 rounded-lg bg-accent-light flex items-center justify-center">
-              <span className="text-accent text-sm">4Y</span>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="bg-white p-6 rounded-[2rem] shadow-soft border border-gray-100/50 flex items-center justify-between group hover:shadow-premium transition-all duration-300">
+          <div>
+            <p className="text-brand-textSecondary text-xs font-bold uppercase tracking-widest mb-1">Total Students</p>
+            <h3 className="text-3xl font-extrabold text-brand-text font-poppins">{stats.total}</h3>
+          </div>
+          <div className="p-4 rounded-2xl bg-primary/10 text-primary group-hover:scale-110 transition-transform duration-300 shadow-sm">
+            <GraduationCap className="w-8 h-8" />
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">5 Years</p>
-              <h3 className="text-lg text-green-600">{stats.age5}</h3>
-            </div>
-            <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-              <span className="text-green-600 text-sm">5Y</span>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="bg-white p-6 rounded-[2rem] shadow-soft border border-gray-100/50 flex items-center justify-between group hover:shadow-premium transition-all duration-300">
+          <div>
+            <p className="text-brand-textSecondary text-xs font-bold uppercase tracking-widest mb-1">4 Years Old</p>
+            <h3 className="text-3xl font-extrabold text-accent-dark font-poppins">{stats.age4}</h3>
+          </div>
+          <div className="p-4 rounded-2xl bg-accent/10 text-accent-dark group-hover:scale-110 transition-transform duration-300 font-extrabold font-poppins text-lg shadow-sm">
+            4Y
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">6 Years</p>
-              <h3 className="text-lg text-purple-600">{stats.age6}</h3>
-            </div>
-            <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-              <span className="text-purple-600 text-sm">6Y</span>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="bg-white p-6 rounded-[2rem] shadow-soft border border-gray-100/50 flex items-center justify-between group hover:shadow-premium transition-all duration-300">
+          <div>
+            <p className="text-brand-textSecondary text-xs font-bold uppercase tracking-widest mb-1">5 Years Old</p>
+            <h3 className="text-3xl font-extrabold text-secondary-dark font-poppins">{stats.age5}</h3>
+          </div>
+          <div className="p-4 rounded-2xl bg-secondary/10 text-secondary-dark group-hover:scale-110 transition-transform duration-300 font-extrabold font-poppins text-lg shadow-sm">
+            5Y
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-[2rem] shadow-soft border border-gray-100/50 flex items-center justify-between group hover:shadow-premium transition-all duration-300">
+          <div>
+            <p className="text-brand-textSecondary text-xs font-bold uppercase tracking-widest mb-1">6 Years Old</p>
+            <h3 className="text-3xl font-extrabold text-primary-dark font-poppins">{stats.age6}</h3>
+          </div>
+          <div className="p-4 rounded-2xl bg-primary/10 text-primary-dark group-hover:scale-110 transition-transform duration-300 font-extrabold font-poppins text-lg shadow-sm">
+            6Y
+          </div>
+        </div>
       </div>
 
-      {/* TABLE */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <CardTitle>All Students ({filteredStudents.length})</CardTitle>
+      {/* DIRECTORY SECTION */}
+      <div className="bg-white rounded-[2.5rem] shadow-soft border border-gray-100/50 overflow-hidden">
+        <div className="p-8 border-b border-gray-50">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div>
+               <h3 className="text-2xl font-bold text-brand-text font-poppins tracking-tight">Student Directory</h3>
+               <p className="text-sm font-medium text-brand-textSecondary mt-1">Found {filteredStudents.length} records</p>
+            </div>
 
-            <div className="flex flex-col md:flex-row gap-3 md:items-center">
-              {/* Age filter */}
+            <div className="flex flex-wrap gap-4 items-center">
               <select
-                className="border rounded-lg p-2 w-full md:w-40"
+                className="bg-brand-bg px-5 py-2.5 rounded-2xl text-xs font-extrabold uppercase tracking-widest text-brand-textSecondary border border-transparent focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none pr-10 cursor-pointer shadow-sm"
                 value={filterAgeGroup}
                 onChange={(e) => setFilterAgeGroup(e.target.value)}
               >
@@ -767,9 +581,8 @@ const StudentList = ({
                 <option value="6">6 Years</option>
               </select>
 
-              {/* Class filter */}
               <select
-                className="border rounded-lg p-2 w-full md:w-40"
+                className="bg-brand-bg px-5 py-2.5 rounded-2xl text-xs font-extrabold uppercase tracking-widest text-brand-textSecondary border border-transparent focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none pr-10 cursor-pointer shadow-sm"
                 value={filterClass}
                 onChange={(e) => setFilterClass(e.target.value)}
               >
@@ -781,278 +594,164 @@ const StudentList = ({
                 ))}
               </select>
 
-              {/* Search */}
-              <div className="relative w-full md:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  className="pl-9"
-                  placeholder="Search by name"
+              <div className="relative group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-textSecondary group-focus-within:text-primary transition-colors" />
+                <input
+                  className="bg-brand-bg pl-11 pr-5 py-2.5 rounded-2xl text-sm font-bold text-brand-text border border-transparent focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all w-72 placeholder:text-brand-textSecondary/50 shadow-sm"
+                  placeholder="Search students or parents..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
             </div>
           </div>
-        </CardHeader>
-
-        <div className="flex gap-2 border-b px-6">
-          <button
-            onClick={() => setStudentView("current")}
-            className={`px-4 py-2 text-sm font-medium border-b-2 ${
-              studentView === "current"
-                ? "border-primary text-primary"
-                : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            Current Students
-          </button>
-
-          <button
-            onClick={() => setStudentView("history")}
-            className={`px-4 py-2 text-sm font-medium border-b-2 ${
-              studentView === "history"
-                ? "border-primary text-primary"
-                : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            Student History
-          </button>
-
-          {userRole === "admin" && (
-            <button
-              onClick={() => setStudentView("pending")}
-              className={`px-4 py-2 text-sm font-medium border-b-2 ${
-                studentView === "pending"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Pending Requests
-              {students.filter(s => s.status === "pending").length > 0 && (
-                <span className="ml-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
-                  {students.filter(s => s.status === "pending").length}
-                </span>
-              )}
-            </button>
-          )}
         </div>
 
-        {/* History filters — only visible on History tab */}
-        {studentView === "history" && (
-          <div className="flex flex-wrap gap-3 px-6 py-3 bg-indigo-50 border-b border-indigo-100">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-indigo-700 uppercase tracking-wide">Filter by:</span>
-            </div>
-            {/* Year dropdown — built from actual registration dates */}
-            <select
-              className="border border-indigo-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:ring-2 focus:ring-indigo-400 outline-none"
-              value={historyYear}
-              onChange={(e) => { setHistoryYear(e.target.value); setHistoryMonth("all"); }}
+        {/* VIEW TABS */}
+        <div className="flex gap-8 px-8 pt-6 border-b border-gray-50 bg-brand-bg/10">
+          {[
+            { id: 'current', label: 'Active Students' },
+            { id: 'pending', label: 'Pending Requests', count: students.filter(s => s.status === 'pending').length },
+            { id: 'history', label: 'Archived / History' }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setStudentView(tab.id)}
+              className={`pb-4 text-xs font-extrabold tracking-widest uppercase transition-all relative flex items-center gap-2 ${
+                studentView === tab.id ? "text-primary" : "text-brand-textSecondary hover:text-brand-text"
+              }`}
             >
-              <option value="all">All Years</option>
-              {[...new Set(
-                students
-                  .filter(s => s.status !== "active" && s.registrationDate)
-                  .map(s => new Date(s.registrationDate).getFullYear())
-              )].sort((a, b) => b - a).map(yr => (
-                <option key={yr} value={yr}>{yr}</option>
-              ))}
-            </select>
-
-            {/* Month dropdown */}
-            <select
-              className="border border-indigo-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:ring-2 focus:ring-indigo-400 outline-none"
-              value={historyMonth}
-              onChange={(e) => setHistoryMonth(e.target.value)}
-              disabled={historyYear === "all"}
-            >
-              <option value="all">All Months</option>
-              {["January","February","March","April","May","June",
-                "July","August","September","October","November","December"
-              ].map((name, i) => (
-                <option key={i + 1} value={i + 1}>{name}</option>
-              ))}
-            </select>
-
-            {/* Active filter pill + reset */}
-            {(historyYear !== "all" || historyMonth !== "all") && (
-              <div className="flex items-center gap-2">
-                <span className="bg-indigo-100 text-indigo-700 text-xs font-semibold px-2.5 py-1 rounded-full">
-                  {historyYear !== "all" ? historyYear : ""}
-                  {historyMonth !== "all" ? ` · ${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][Number(historyMonth)-1]}` : ""}
+              {tab.label}
+              {tab.count > 0 && (
+                <span className="w-5 h-5 rounded-full bg-status-error text-white text-[10px] flex items-center justify-center shadow-lg shadow-status-error/20 animate-pulse">
+                   {tab.count}
                 </span>
-                <button
-                  onClick={() => { setHistoryYear("all"); setHistoryMonth("all"); }}
-                  className="text-xs text-indigo-500 hover:text-indigo-700 font-medium underline"
-                >Clear</button>
-              </div>
-            )}
+              )}
+              {studentView === tab.id && <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-primary rounded-t-full animate-in slide-in-from-bottom-1" />}
+            </button>
+          ))}
+        </div>
 
-            <span className="ml-auto text-xs text-indigo-500 self-center">
-              {filteredStudents.length} record{filteredStudents.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-        )}
-
-        <CardContent>
+        {/* TABLE CONTENT */}
+        <div className="overflow-x-auto scrollbar-hide">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10">#</TableHead>
-                <TableHead>Student</TableHead>
-                <TableHead>Age</TableHead>
-                <TableHead>Gender</TableHead>
-                <TableHead>Date of Birth</TableHead>
-                <TableHead>Reg. Date</TableHead>
-                <TableHead>Parent</TableHead>
-                <TableHead>Parent IC</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Address</TableHead>
-                <TableHead>Class</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+            <TableHeader className="bg-brand-bg/50">
+              <TableRow className="border-none">
+                <TableHead className="font-extrabold text-brand-textSecondary uppercase tracking-widest text-[10px] py-6 pl-8">#</TableHead>
+                <TableHead className="font-extrabold text-brand-textSecondary uppercase tracking-widest text-[10px] py-6">Student Information</TableHead>
+                <TableHead className="font-extrabold text-brand-textSecondary uppercase tracking-widest text-[10px] py-6">Class / Age</TableHead>
+                <TableHead className="font-extrabold text-brand-textSecondary uppercase tracking-widest text-[10px] py-6">Parent Details</TableHead>
+                <TableHead className="font-extrabold text-brand-textSecondary uppercase tracking-widest text-[10px] py-6">Status</TableHead>
+                <TableHead className="font-extrabold text-brand-textSecondary uppercase tracking-widest text-[10px] py-6 text-right pr-8">Actions</TableHead>
               </TableRow>
             </TableHeader>
-
             <TableBody>
-              {filteredStudents.map((student, index) => {
-                const id = student._id || student.id;
-                // Safely handle optional chaining for display
-                const displayName = student.name || "Unknown";
-                const displayAge = getStudentAge(student);
-                const displayClass = student.classId?.className || student.classId?.name || "-";
-                
-                return (
-                  <TableRow key={id}>
-                    {/* Row number column */}
-                    <TableCell className="text-gray-400 font-bold text-sm select-none">{index + 1}.</TableCell>
-                    {/* Student name column */}
-                    <TableCell>
-                      <p className="font-medium text-gray-900">{displayName}</p>
-                    </TableCell>
-
-                    {/* Age */}
-                    <TableCell>{displayAge || "-"}</TableCell>
-
-                    {/* Gender */}
-                    <TableCell>{student.gender || "-"}</TableCell>
-
-                    {/* Date of Birth */}
-                    <TableCell>
-                      {student.dateOfBirth
-                        ? new Date(student.dateOfBirth).toLocaleDateString()
-                        : "-"}
-                    </TableCell>
-
-                    {/* Registration Date */}
-                    <TableCell>
-                      {student.registrationDate
-                        ? new Date(student.registrationDate).toLocaleDateString()
-                        : "-"}
-                    </TableCell>
-
-                    {/* Parent */}
-                    <TableCell>{student.parentName || student.parentId?.name || "-"}</TableCell>
-
-                    {/* Parent IC */}
-                    <TableCell>{student.parentIcNumber || "-"}</TableCell>
-
-                    {/* Parent Phone */}
-                    <TableCell>{student.parentPhoneNumber || "-"}</TableCell>
-
-                    {/* Home Address */}
-                    <TableCell className="max-w-[220px] whitespace-normal break-words">
-                      {student.homeAddress || "-"}
-                    </TableCell>
-
-                    {/* Class */}
-                    <TableCell>{displayClass}</TableCell>
-
-                    {/* Status */}
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(student.status)}`}>
-                        {(student.status?.charAt(0).toUpperCase() + student.status?.slice(1)) || "Active"}
-                      </span>
-                    </TableCell>
-
-                    {/* Actions - CONDITIONALLY RENDERED */}
-                    <TableCell className="text-right">
-                      {studentView === "current" || studentView === "pending" ? (
-                        /* Only show edit if admin */
-                        userRole === "admin" && (
-                          <div className="flex justify-end gap-2">
-                            {student.status === "pending" ? (
-                              <>
-                                <Button
-                                  size="sm"
-                                  className="bg-green-600 hover:bg-green-700 text-white h-8"
-                                  onClick={() => onApprove(student._id || student.id)}
-                                >
-                                  Approve
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-red-600 border-red-200 hover:bg-red-50 h-8"
-                                  onClick={() => onReject(student._id || student.id)}
-                                >
-                                  Reject
-                                </Button>
-                              </>
-                            ) : (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
-                                  onClick={() => {
-                                    setEditingStudent(student);
-                                    setFormData({
-                                      name: student.name || "",
-                                      dateOfBirth: student.dateOfBirth
-                                        ? student.dateOfBirth.split("T")[0]
-                                        : "",
-                                      gender: student.gender || "",
-                                      classId: student.classId?._id || student.classId || "",
-                                      parentName: student.parentName || "",
-                                      parentIcNumber: student.parentIcNumber || "",
-                                      parentPhoneNumber: student.parentPhoneNumber || "",
-                                      homeAddress: student.homeAddress || "",
-                                      parentEmail: "",
-                                      parentPassword: "",
-                                      status: student.status || "active",
-                                    });
-
-                                    setIsAddDialogOpen(true);
-                                  }}
-                                >
-                                  <Edit className="w-4 h-4 text-gray-500" />
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        )
-                      ) : (
-                        <span className="text-gray-400 italic text-sm">
-                          Archived
-                        </span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-
-              {filteredStudents.length === 0 && (
+              {filteredStudents.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={13} className="text-center text-gray-500">
-                    No students found.
+                  <TableCell colSpan={6} className="h-64 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="w-20 h-20 bg-brand-bg rounded-full flex items-center justify-center mb-4">
+                         <Search className="w-10 h-10 text-gray-300" />
+                      </div>
+                      <p className="text-brand-textSecondary font-bold text-lg font-poppins">No students found</p>
+                      <p className="text-brand-textSecondary/60 text-sm mt-1">Try adjusting your filters or search query.</p>
+                    </div>
                   </TableCell>
                 </TableRow>
+              ) : (
+                filteredStudents.map((student, index) => (
+                  <TableRow key={student._id} className="hover:bg-brand-bg/30 transition-all border-b border-gray-50 group">
+                    <TableCell className="py-5 pl-8 text-xs font-bold text-brand-textSecondary/50">
+                      {index + 1}
+                    </TableCell>
+                    <TableCell className="py-5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-[1.25rem] bg-white shadow-soft border border-gray-100 text-primary flex items-center justify-center font-extrabold text-sm uppercase group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                          {student.name?.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-bold text-brand-text group-hover:text-primary transition-colors text-base leading-tight">{student.name}</p>
+                          <p className="text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mt-1">{student.gender} • {student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : 'N/A'}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-5">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-brand-text text-sm">{student.classId?.className || "N/A"}</span>
+                        <span className="text-[10px] font-bold text-brand-textSecondary uppercase tracking-tighter mt-0.5">{getStudentAge(student)} Years Old</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-5">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-brand-text text-sm">{student.parentName || "—"}</span>
+                        <span className="text-[10px] font-bold text-brand-textSecondary uppercase tracking-tighter mt-0.5">{student.parentPhoneNumber || "—"}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-5">
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest shadow-sm border ${getStatusBadge(student.status)}`}>
+                        {student.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-5 text-right pr-8">
+                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                        {student.status === "pending" ? (
+                          <>
+                            <button
+                              onClick={() => onApprove(student._id)}
+                              className="p-3 bg-secondary/10 text-secondary-dark rounded-xl hover:bg-secondary hover:text-white transition-all shadow-sm"
+                              title="Approve Enrollment"
+                            >
+                              <CheckCircle className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => onReject(student._id)}
+                              className="p-3 bg-status-error/10 text-status-error rounded-xl hover:bg-status-error hover:text-white transition-all shadow-sm"
+                              title="Reject Application"
+                            >
+                              <Plus className="w-5 h-5 rotate-45" />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => {
+                                setEditingStudent(student);
+                                setFormData({
+                                  ...student,
+                                  classId: typeof student.classId === 'object' ? student.classId?._id : student.classId,
+                                  dateOfBirth: student.dateOfBirth ? new Date(student.dateOfBirth).toISOString().split('T')[0] : ""
+                                });
+                                setIsAddDialogOpen(true);
+                              }}
+                              className="p-3 bg-primary/10 text-primary rounded-xl hover:bg-primary hover:text-white transition-all shadow-sm"
+                              title="Edit Record"
+                            >
+                              <Edit className="w-5 h-5" />
+                            </button>
+                            {userRole === 'admin' && (
+                              <button
+                                onClick={() => {
+                                  if (window.confirm("Are you sure you want to delete this student permanent record?")) {
+                                    onDelete(student._id || student.id);
+                                  }
+                                }}
+                                className="p-3 bg-status-error/10 text-status-error rounded-xl hover:bg-status-error hover:text-white transition-all shadow-sm"
+                                title="Delete Permanently"
+                              >
+                                <Plus className="w-5 h-5 rotate-45" />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

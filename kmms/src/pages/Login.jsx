@@ -9,44 +9,37 @@ import {
   School,
   GraduationCap,
   Users,
-  Eye,      // <--- Added
-  EyeOff    // <--- Added
+  Eye,
+  EyeOff,
+  Sparkles
 } from "lucide-react";
 
-// --- FIXED INPUT COMPONENT ---
 const InputField = ({ icon: Icon, type, placeholder, value, onChange }) => {
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === "password";
 
   return (
     <div className="relative mb-4">
-      {/* Left Icon (User/Lock) */}
-      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <Icon className="h-5 w-5 text-gray-400" />
+      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+        <Icon className="h-5 w-5 text-brand-textSecondary" />
       </div>
 
       <input
-        // If it's a password field, toggle between 'text' and 'password'
         type={isPassword ? (showPassword ? "text" : "password") : type}
-        className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all bg-white hover:bg-white"
+        className="w-full pl-12 pr-12 py-4 bg-brand-bg/50 border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-brand-textSecondary/60"
         placeholder={placeholder}
         value={value}
         onChange={onChange}
         required
       />
 
-      {/* Right Icon (Eye Toggle) - Only appears for password fields */}
       {isPassword && (
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+          className="absolute inset-y-0 right-0 pr-4 flex items-center text-brand-textSecondary hover:text-primary transition-colors focus:outline-none"
         >
-          {showPassword ? (
-            <EyeOff className="h-5 w-5" />
-          ) : (
-            <Eye className="h-5 w-5" />
-          )}
+          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
         </button>
       )}
     </div>
@@ -56,20 +49,20 @@ const InputField = ({ icon: Icon, type, placeholder, value, onChange }) => {
 const RoleCard = ({ role, icon: Icon, title, description, onClick }) => (
   <button
     onClick={() => onClick(role)}
-    className="w-full flex items-center p-4 mb-3 bg-white border border-gray-100 rounded-xl hover:shadow-lg hover:border-primary-light hover:bg-brand-bg transition-all group text-left"
+    className="w-full flex items-center p-5 mb-4 bg-white border border-gray-100 rounded-3xl hover:shadow-premium hover:border-primary/30 transition-all group text-left group active:scale-[0.98]"
   >
-    <div className="h-12 w-12 rounded-full bg-primary-light text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-      <Icon className="h-6 w-6" />
+    <div className="h-14 w-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300">
+      <Icon className="h-7 w-7" />
     </div>
-    <div className="ml-4">
-      <h3 className="text-gray-900 font-semibold">{title}</h3>
-      <p className="text-sm text-gray-500">{description}</p>
+    <div className="ml-5">
+      <h3 className="text-brand-text font-bold text-lg">{title}</h3>
+      <p className="text-sm text-brand-textSecondary leading-relaxed">{description}</p>
     </div>
   </button>
 );
 
 const Login = ({ onLogin }) => {
-  const [role, setRole] = useState(null); // 'admin' | 'teacher' | 'parent'
+  const [role, setRole] = useState(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -84,7 +77,6 @@ const Login = ({ onLogin }) => {
       const res = await http.post("/auth/login", { email, password, role });
       onLogin(res.data);
     } catch (err) {
-      console.error(err);
       setError(err.response?.data?.message || "Login failed. Please check credentials.");
     } finally {
       setLoading(false);
@@ -92,77 +84,90 @@ const Login = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex bg-white">
-      {/* LEFT SIDE - BRANDING */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary to-primary-dark text-white flex-col justify-between p-12 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <path d="M0 100 C 20 0 50 0 100 100 Z" fill="white" />
-          </svg>
-        </div>
-
+    <div className="min-h-screen flex bg-brand-bg font-inter">
+      {/* LEFT SIDE - BRANDING (Refreshed) */}
+      <div className="hidden lg:flex lg:w-3/5 bg-white flex-col justify-between p-16 relative overflow-hidden">
+        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/5 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-secondary/10 rounded-full blur-3xl animate-pulse delay-700" />
+        
         <div className="relative z-10">
-          <div className="flex items-center gap-3 text-2xl font-bold">
-            <School className="w-8 h-8" />
-            <span>Kindergarten Management & Monitoring System</span>
+          <div className="flex items-center gap-3 text-2xl font-bold text-primary">
+            <div className="p-2 bg-primary/10 rounded-xl">
+              <School className="w-8 h-8" />
+            </div>
+            <span className="font-poppins tracking-tight">SmartKindy</span>
           </div>
         </div>
 
-        <div className="relative z-10 max-w-md">
-          <h1 className="text-5xl font-bold mb-6 leading-tight">
-            SmartKindy
+        <div className="relative z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent/10 text-accent-dark rounded-full text-sm font-bold mb-8">
+            <Sparkles className="w-4 h-4" />
+            Modern Kindergarten Management
+          </div>
+          <h1 className="text-7xl font-bold text-brand-text mb-8 leading-[1.1] font-poppins tracking-tight">
+            Nurturing <br />
+            <span className="text-primary italic">Tomorrow's</span> <br />
+            Leaders Today.
           </h1>
-          <p className="text-brand-bg text-lg leading-relaxed">
-            Streamline your kindergarten management in one unified platform.
+          <p className="text-brand-textSecondary text-xl max-w-lg leading-relaxed">
+            The complete management & monitoring platform for teachers, parents, and administrators.
           </p>
         </div>
 
-        <div className="relative z-10 text-sm text-brand-bg/80">
-          © {new Date().getFullYear()} Kindergarten Management System
+        <div className="relative z-10 flex items-center gap-8">
+          <div className="flex -space-x-3">
+             {[1,2,3,4].map(i => (
+               <div key={i} className="w-10 h-10 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500 overflow-hidden">
+                 <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`} alt="user" />
+               </div>
+             ))}
+          </div>
+          <p className="text-brand-textSecondary font-medium">
+            Join <span className="text-primary font-bold">50+</span> schools managing better.
+          </p>
         </div>
       </div>
 
-      {/* RIGHT SIDE - LOGIN FORM */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
-        <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl">
-
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">
-              {!role ? "Welcome Back" : `${role.charAt(0).toUpperCase() + role.slice(1)} Login`}
+      {/* RIGHT SIDE - LOGIN FORM (Refreshed) */}
+      <div className="w-full lg:w-2/5 flex items-center justify-center p-8 lg:p-12">
+        <div className="w-full max-w-md bg-white p-10 rounded-[2.5rem] shadow-premium animate-in fade-in zoom-in duration-700">
+          <div className="text-center mb-10">
+            <h2 className="text-4xl font-bold text-brand-text font-poppins tracking-tight">
+              {!role ? "Welcome" : `${role.charAt(0).toUpperCase() + role.slice(1)} Login`}
             </h2>
-            <p className="text-gray-500 mt-2">
-              {!role ? "Please select your login type to continue" : "Enter your credentials to access your dashboard"}
+            <p className="text-brand-textSecondary mt-3 text-lg">
+              {!role ? "Who are you logging in as?" : "Access your secure portal below"}
             </p>
           </div>
 
           {!role ? (
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-2">
               <RoleCard
                 role="admin"
                 icon={School}
-                title="Administrator Portal"
-                description="System management & oversight"
+                title="Administrator"
+                description="Manage staff, students & operations"
                 onClick={setRole}
               />
               <RoleCard
                 role="teacher"
                 icon={GraduationCap}
-                title="Teacher Portal"
-                description="Classroom & student management"
+                title="Teacher"
+                description="Classroom activities & student progress"
                 onClick={setRole}
               />
               <RoleCard
                 role="parent"
                 icon={Users}
-                title="Parent Portal"
-                description="View child's progress & updates"
+                title="Parent"
+                description="Track your child's journey & updates"
                 onClick={setRole}
               />
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="animate-in fade-in slide-in-from-right-8 duration-300">
+            <form onSubmit={handleSubmit} className="animate-in slide-in-from-right-8 duration-300">
               {error && (
-                <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded-r">
+                <div className="mb-6 p-4 bg-status-error/10 border-l-4 border-status-error text-status-error text-sm rounded-r-xl font-medium">
                   {error}
                 </div>
               )}
@@ -183,10 +188,16 @@ const Login = ({ onLogin }) => {
                 onChange={(e) => setPassword(e.target.value)}
               />
 
+              <div className="flex justify-end mb-8">
+                <Link to="/forgot-password" size="sm" className="text-sm font-bold text-primary hover:text-primary-dark transition-colors">
+                  Forgot Password?
+                </Link>
+              </div>
+
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3.5 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-primary/30 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 rounded-[1.25rem] transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/30 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg font-poppins"
               >
                 {loading ? (
                   <>
@@ -194,7 +205,7 @@ const Login = ({ onLogin }) => {
                     Signing in...
                   </>
                 ) : (
-                  "Sign In"
+                  "Sign In to Portal"
                 )}
               </button>
 
@@ -206,19 +217,19 @@ const Login = ({ onLogin }) => {
                   setEmail("");
                   setPassword("");
                 }}
-                className="w-full mt-4 text-gray-500 hover:text-gray-800 text-sm font-medium flex items-center justify-center gap-1 transition-colors"
+                className="w-full mt-6 text-brand-textSecondary hover:text-brand-text text-sm font-bold flex items-center justify-center gap-2 transition-colors uppercase tracking-widest"
               >
-                <ChevronLeft className="w-4 h-4" />
-                Back to Role Selection
+                <ChevronLeft className="w-5 h-5" />
+                Change Portal Type
               </button>
             </form>
           )}
 
-          <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-            <p className="text-gray-500 text-sm">
+          <div className="mt-12 pt-8 border-t border-gray-100 text-center">
+            <p className="text-brand-textSecondary font-medium">
               New parent?{" "}
-              <Link to="/enroll" className="text-primary-dark font-bold hover:underline">
-                Enroll your child here
+              <Link to="/enroll" className="text-secondary-dark font-bold hover:underline">
+                Register your child here
               </Link>
             </p>
           </div>

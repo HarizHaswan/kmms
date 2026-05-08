@@ -17,7 +17,7 @@ function initIO(server) {
     // client should send auth token in handshake.auth.token
     // we will verify token and join them to a room with their userId
     const jwt = require('jsonwebtoken');
-    const User = require('../models/User');
+    const User = require('../config/models/User');
     try {
       const token = socket.handshake.auth?.token;
       if (token) {

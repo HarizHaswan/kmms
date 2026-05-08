@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const api = axios.create({ baseURL: process.env.REACT_APP_API_URL + '/api' });
+import api from './http';
 
 export const fetchNotifications = () => api.get('/notifications');
 export const markAsRead = (id) => api.post(`/notifications/${id}/read`);

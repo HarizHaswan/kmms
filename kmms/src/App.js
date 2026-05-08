@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import LandingPage from "./pages/LandingPage";
 import Enrollment from "./pages/Enrollment";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import http from "./api/http"; // IMPORTANT: import axios instance
 import { ToastProvider } from "./components/ui/use-toast";
@@ -62,6 +64,10 @@ function App() {
 
         {/* ENROLLMENT PAGE */}
         <Route path="/enroll" element={<Enrollment />} />
+
+        {/* PASSWORD RESET PAGES */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
         {/* LOGIN PAGE */}
         <Route

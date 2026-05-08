@@ -122,13 +122,13 @@ const Dashboard = ({ user, onLogout }) => {
       if (activeTab === "settings")
         return <Settings user={user} />;
 
-      return <TeacherDashboard setActiveTab={setActiveTab} />;
+      return <TeacherDashboard setActiveTab={setActiveTab} user={user} />;
     }
 
     // ========== PARENT ==========
     if (role === "parent") {
       if (activeTab === "dashboard")
-        return <ParentDashboard setActiveTab={setActiveTab} />;
+        return <ParentDashboard setActiveTab={setActiveTab} user={user} />;
 
       if (activeTab === "timetables")
         return <ParentTimetable />;
@@ -151,7 +151,7 @@ const Dashboard = ({ user, onLogout }) => {
       if (activeTab === "settings")
         return <Settings user={user} />;
 
-      return <ParentDashboard setActiveTab={setActiveTab} />;
+      return <ParentDashboard setActiveTab={setActiveTab} user={user} />;
     }
 
     return null;
