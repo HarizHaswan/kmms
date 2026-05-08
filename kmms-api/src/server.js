@@ -14,7 +14,14 @@ const app = express();
 connectDB();
 
 // Middlewares
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(cors({
+  origin: [
+    "http://localhost:3000",
+    "https://smartkindy.my",
+    "https://www.smartkindy.my"
+  ],
+  credentials: true
+}));
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev"));
