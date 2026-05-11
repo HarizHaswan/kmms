@@ -24,6 +24,7 @@ exports.createTeacher = async (req, res) => {
       epfNo,
       taxNo,
       status,
+      icNumber,
     } = req.body;
 
     // 1. Sanitize Inputs (Remove spaces, force lowercase email)
