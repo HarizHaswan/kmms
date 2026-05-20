@@ -20,6 +20,14 @@ import { getStudents } from "../../api/students";
 
 const BASE_URL = "http://localhost:5000"; // backend base for serving uploaded files
 
+const getActivityPhotoUrl = (url) => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  return `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+};
+
 // ─── Helper: group activities by date ─────────────────────────────────────────
 const groupByDate = (activities) => {
   const groups = {};
@@ -399,12 +407,12 @@ const ParentActivities = ({ user }) => {
                                 {act.photos.map((url, photoIdx) => (
                                   <a
                                     key={photoIdx}
-                                    href={`${BASE_URL}${url}`}
+                                    href={getActivityPhotoUrl(url)}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                   >
                                     <img
-                                      src={`${BASE_URL}${url}`}
+                                      src={getActivityPhotoUrl(url)}
                                       alt={`Activity photo ${photoIdx + 1}`}
                                       className="h-24 w-auto rounded-lg object-cover border border-white/60 shadow-sm hover:scale-105 transition-transform cursor-pointer"
                                     />

@@ -34,6 +34,14 @@ import { downloadFeeReceiptPdf, downloadInvoiceBillingPdf } from "../../utils/pa
 
 const BASE_URL = "http://localhost:5000";
 
+const getReceiptUrl = (url) => {
+  if (!url) return "#";
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  return `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+};
+
 const DEFAULT_INVOICE_FORM = {
   studentId: "",
   feeItem: "",
@@ -1451,7 +1459,7 @@ const PaymentManagement = ({ userId, role, user }) => {
                                     <td className="px-6 py-4">
                                       {withReceipt ? (
                                         <a
-                                          href={`${BASE_URL}${withReceipt.receiptUrl}`}
+                                          href={getReceiptUrl(withReceipt.receiptUrl)}
                                           target="_blank"
                                           rel="noopener noreferrer"
                                           className="inline-flex items-center gap-1.5 text-xs text-green-700 font-semibold bg-green-50 border border-green-200 px-2.5 py-1.5 rounded-lg hover:bg-green-100 transition"
@@ -1824,7 +1832,7 @@ const PaymentManagement = ({ userId, role, user }) => {
                         <td className="px-5 py-4">
                           {p.receiptUrl ? (
                             <a
-                              href={`${BASE_URL}${p.receiptUrl}`}
+                              href={getReceiptUrl(p.receiptUrl)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1.5 rounded-lg hover:bg-indigo-100 transition"
@@ -1911,7 +1919,7 @@ const PaymentManagement = ({ userId, role, user }) => {
                     <td className="px-6 py-4">
                       {payment.receiptUrl ? (
                         <a
-                          href={`${BASE_URL}${payment.receiptUrl}`}
+                          href={getReceiptUrl(payment.receiptUrl)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium bg-indigo-50 px-2.5 py-1.5 rounded-lg"

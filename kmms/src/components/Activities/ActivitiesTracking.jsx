@@ -27,6 +27,14 @@ import { getStudents } from "../../api/students";
 
 const BASE_URL = "http://localhost:5000"; // backend base for serving static files
 
+const getActivityPhotoUrl = (url) => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  return `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+};
+
 const ActivitiesTracking = ({ user }) => {
   const [students, setStudents] = useState([]);   // active students only
   const [activities, setActivities] = useState([]);
@@ -467,13 +475,13 @@ const ActivitiesTracking = ({ user }) => {
                       {act.photos.map((url, idx) => (
                         <a
                           key={idx}
-                          href={`${BASE_URL}${url}`}
+                          href={getActivityPhotoUrl(url)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="block"
                         >
                           <img
-                            src={`${BASE_URL}${url}`}
+                            src={getActivityPhotoUrl(url)}
                             alt={`Activity photo ${idx + 1}`}
                             className="h-28 w-auto rounded-lg object-cover border border-indigo-100 hover:scale-105 transition-transform cursor-pointer shadow-sm"
                           />
