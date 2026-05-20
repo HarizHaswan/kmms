@@ -137,6 +137,7 @@ router.post("/", protect, authorize("admin"), async (req, res, next) => {
           email: data.parentEmail.toLowerCase().trim(),
           password: hashedPassword,
           role: "parent",
+          phone: data.parentPhoneNumber,
           status: "Active"
         });
         data.parentId = parentUser._id;
@@ -225,6 +226,7 @@ router.post("/enroll", async (req, res, next) => {
           email: parentEmail,
           password: hashedPassword,
           role: "parent",
+          phone: data.parentPhoneNumber,
           status: "Pending",
         });
         data.parentId = parentUser._id;

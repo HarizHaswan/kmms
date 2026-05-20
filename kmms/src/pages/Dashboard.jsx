@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Sidebar from "../components/Layout/Sidebar";
 import Navbar from "../components/Layout/Navbar";
 import AdminDashboard from "../components/Dashboard/AdminDashboard";
@@ -32,11 +33,16 @@ import ParentTimetable from "../components/Timetable/ParentTimetable";
 const Dashboard = ({ user, onLogout }) => {
   console.log("📌 Dashboard loaded. User role =", user.role);
 
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "dashboard";
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Normalize for logic only
   const role = user.role.toLowerCase();
+
+  const setActiveTab = (tab) => {
+    setSearchParams({ tab });
+  };
 
   const handleChangeTab = (tab) => {
     setActiveTab(tab);

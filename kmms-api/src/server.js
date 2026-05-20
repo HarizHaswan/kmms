@@ -11,7 +11,34 @@ const { startFeeAutomationScheduler } = require("./config/services/feeAutomation
 const app = express();
 
 // Connect DB
-connectDB();
+connectDB().then(() => {
+  // One-time self-healing sync for any existing parents whose phone field in the User model is missing
+  const syncExistingParentsPhone = async () => {
+    try {
+      const Student = require("./config/models/Student");
+      const User = require("./config/models/User");
+      const parents = await User.find({
+        role: "parent",
+        $or: [{ phone: { $exists: false } }, { phone: "" }, { phone: null }]
+      });
+      let updatedCount = 0;
+      for (const parent of parents) {
+        const student = await Student.findOne({ parentId: parent._id, parentPhoneNumber: { $ne: "" } });
+        if (student && student.parentPhoneNumber) {
+          parent.phone = student.parentPhoneNumber;
+          await parent.save();
+          updatedCount++;
+        }
+      }
+      if (updatedCount > 0) {
+        console.log(`[Migration] Successfully synced phone numbers for ${updatedCount} existing parents.`);
+      }
+    } catch (err) {
+      console.error("[Migration] Error syncing existing parents phone numbers:", err);
+    }
+  };
+  syncExistingParentsPhone();
+});
 
 // Middlewares
 app.use(cors({

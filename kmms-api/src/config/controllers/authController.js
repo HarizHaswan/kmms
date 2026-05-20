@@ -27,6 +27,7 @@ exports.registerUser = async (req, res, next) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      phone: user.phone,
       classAssigned: user.classAssigned,
       token: generateToken(user._id),
     });
@@ -78,6 +79,7 @@ exports.loginUser = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        phone: user.phone,
         classAssigned: user.classAssigned,
         childStudentId: user.childStudentId,
         token: generateToken(user._id),

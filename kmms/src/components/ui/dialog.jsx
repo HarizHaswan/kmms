@@ -12,10 +12,10 @@ export function DialogTrigger({ ...props }) {
 export function DialogContent({ className = "", ...props }) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 bg-black/40" />
+      <DialogPrimitive.Overlay className="fixed inset-0 bg-black/40 z-[100]" />
       <DialogPrimitive.Content
         className={
-          "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl p-6 shadow-xl w-full max-w-lg " +
+          "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl p-6 shadow-xl w-full max-w-lg z-[100] " +
           className
         }
         {...props}

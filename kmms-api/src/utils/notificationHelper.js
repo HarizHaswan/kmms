@@ -42,4 +42,11 @@ async function getUserIdsByRole(role) {
   return users.map(u => u._id);
 }
 
-module.exports = { createNotification, createNotificationsForUsers, getUserIdsByRole };
+async function notifyRole(role, type, title, body, data, createdBy) {
+  const userIds = await getUserIdsByRole(role);
+  if (userIds.length > 0) {
+    await createNotificationsForUsers(userIds, { type, title, body, data, createdBy });
+  }
+}
+
+module.exports = { createNotification, createNotificationsForUsers, getUserIdsByRole, notifyRole };

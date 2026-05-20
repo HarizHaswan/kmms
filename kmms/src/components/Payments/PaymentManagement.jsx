@@ -1935,7 +1935,7 @@ const PaymentManagement = ({ userId, role, user }) => {
       )}
 
       {showFeeModal && isAdmin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-3xl p-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start gap-4">
               <div>
@@ -2193,7 +2193,7 @@ const PaymentManagement = ({ userId, role, user }) => {
       )}
 
       {showInvoiceModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
             <h3 className="text-xl font-bold text-gray-900 mb-4">
               Create Manual Invoice
@@ -2311,7 +2311,7 @@ const PaymentManagement = ({ userId, role, user }) => {
       )}
 
       {showPaymentModal && selectedInvoice && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
             <h3 className="text-xl font-bold text-gray-900 mb-4">
               Record Payment
@@ -2407,7 +2407,7 @@ const PaymentManagement = ({ userId, role, user }) => {
       )}
 
       {showParentPayModal && selectedInvoice && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg p-6 md:p-8 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-6">
               <h3 className="text-2xl font-bold text-gray-900">Submit Payment</h3>
@@ -2522,7 +2522,7 @@ const PaymentManagement = ({ userId, role, user }) => {
         const payerName = user?.name || "Parent / Guardian";
 
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
             <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[92vh] overflow-y-auto flex flex-col">
 
               {/* Modal header */}
@@ -2643,7 +2643,7 @@ const PaymentManagement = ({ userId, role, user }) => {
         const refNo = `STMT-${Date.now().toString(36).toUpperCase().slice(-6)}`;
 
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
             <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[92vh] overflow-y-auto flex flex-col">
 
               {/* Header */}

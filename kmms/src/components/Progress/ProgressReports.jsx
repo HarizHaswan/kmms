@@ -340,7 +340,7 @@ const ProgressReports = ({ role, user }) => {
         </div>
 
         {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
             <div className="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-xl">
               <div className="flex items-start justify-between gap-4 mb-5">
                 <div>
