@@ -597,8 +597,8 @@ const PaymentManagement = ({ userId, role, user }) => {
   const selectedClassStudents =
     isAdmin && selectedClassFilter !== "all"
       ? students.filter(
-          (student) => getIdValue(student.classId) === selectedClassFilter
-        )
+        (student) => getIdValue(student.classId) === selectedClassFilter
+      )
       : students;
 
   const selectedClassStudentIds = selectedClassStudents.map((student) =>
@@ -608,22 +608,22 @@ const PaymentManagement = ({ userId, role, user }) => {
   const summaryInvoices =
     isAdmin && selectedClassFilter !== "all"
       ? invoices.filter((invoice) =>
-          selectedClassStudentIds.includes(getIdValue(invoice.studentId))
-        )
+        selectedClassStudentIds.includes(getIdValue(invoice.studentId))
+      )
       : invoices;
 
   const summaryPayments =
     isAdmin && selectedClassFilter !== "all"
       ? payments.filter((payment) =>
-          selectedClassStudentIds.includes(getIdValue(payment.studentId))
-        )
+        selectedClassStudentIds.includes(getIdValue(payment.studentId))
+      )
       : payments;
 
   const displayedInvoices =
     isAdmin && selectedClassFilter !== "all"
       ? invoices.filter((invoice) =>
-          selectedClassStudentIds.includes(getIdValue(invoice.studentId))
-        )
+        selectedClassStudentIds.includes(getIdValue(invoice.studentId))
+      )
       : invoices;
 
   const totalInvoiced = summaryInvoices.reduce(
@@ -638,8 +638,8 @@ const PaymentManagement = ({ userId, role, user }) => {
   const summaryScopeLabel =
     isAdmin && selectedClassFilter !== "all"
       ? getClassLabel(
-          classes.find((classItem) => getIdValue(classItem) === selectedClassFilter)
-        )
+        classes.find((classItem) => getIdValue(classItem) === selectedClassFilter)
+      )
       : "All Classes";
 
   const sortedClasses = [...classes].sort((left, right) => {
@@ -672,66 +672,66 @@ const PaymentManagement = ({ userId, role, user }) => {
 
   const classStatusRows = isAdmin
     ? classStatusSourceStudents
-        .filter((student) => {
-          if (selectedClassFilter === "all") return true;
-          return getIdValue(student.classId) === selectedClassFilter;
-        })
-        .map((student) => {
-          const studentId = getIdValue(student);
-          const studentInvoices = invoices.filter(
-            (invoice) => getIdValue(invoice.studentId) === studentId
-          );
-          const studentPayments = payments.filter(
-            (payment) => getIdValue(payment.studentId) === studentId
-          );
-          const billed = studentInvoices.reduce(
-            (sum, invoice) => sum + Number(invoice.amount || 0),
-            0
-          );
-          const paid = studentPayments.reduce(
-            (sum, payment) => sum + Number(payment.amountPaid || 0),
-            0
-          );
-          const outstanding = Math.max(0, billed - paid);
-          const unpaidInvoices = studentInvoices.filter(
-            (invoice) => invoice.status !== "paid"
-          );
-          const latestDue = [...unpaidInvoices].sort(
-            (left, right) =>
-              new Date(left.dueDate || left.createdAt) -
-              new Date(right.dueDate || right.createdAt)
-          )[0];
+      .filter((student) => {
+        if (selectedClassFilter === "all") return true;
+        return getIdValue(student.classId) === selectedClassFilter;
+      })
+      .map((student) => {
+        const studentId = getIdValue(student);
+        const studentInvoices = invoices.filter(
+          (invoice) => getIdValue(invoice.studentId) === studentId
+        );
+        const studentPayments = payments.filter(
+          (payment) => getIdValue(payment.studentId) === studentId
+        );
+        const billed = studentInvoices.reduce(
+          (sum, invoice) => sum + Number(invoice.amount || 0),
+          0
+        );
+        const paid = studentPayments.reduce(
+          (sum, payment) => sum + Number(payment.amountPaid || 0),
+          0
+        );
+        const outstanding = Math.max(0, billed - paid);
+        const unpaidInvoices = studentInvoices.filter(
+          (invoice) => invoice.status !== "paid"
+        );
+        const latestDue = [...unpaidInvoices].sort(
+          (left, right) =>
+            new Date(left.dueDate || left.createdAt) -
+            new Date(right.dueDate || right.createdAt)
+        )[0];
 
-          let paymentStatus = "no-fees";
-          if (studentInvoices.length > 0) {
-            if (
-              outstanding <= 0 &&
-              studentInvoices.every((invoice) => invoice.status === "paid")
-            ) {
-              paymentStatus = "paid";
-            } else if (
-              paid > 0 ||
-              studentInvoices.some((invoice) => invoice.status === "partial")
-            ) {
-              paymentStatus = "partial";
-            } else {
-              paymentStatus = "unpaid";
-            }
+        let paymentStatus = "no-fees";
+        if (studentInvoices.length > 0) {
+          if (
+            outstanding <= 0 &&
+            studentInvoices.every((invoice) => invoice.status === "paid")
+          ) {
+            paymentStatus = "paid";
+          } else if (
+            paid > 0 ||
+            studentInvoices.some((invoice) => invoice.status === "partial")
+          ) {
+            paymentStatus = "partial";
+          } else {
+            paymentStatus = "unpaid";
           }
+        }
 
-          return {
-            studentId,
-            studentName: student.name,
-            classLabel: getClassLabel(student.classId),
-            recordStatus: getStudentLifecycleStatus(student),
-            paymentStatus,
-            invoiceCount: studentInvoices.length,
-            billed,
-            paid,
-            outstanding,
-            latestDue: latestDue?.dueDate || latestDue?.createdAt || null,
-          };
-        })
+        return {
+          studentId,
+          studentName: student.name,
+          classLabel: getClassLabel(student.classId),
+          recordStatus: getStudentLifecycleStatus(student),
+          paymentStatus,
+          invoiceCount: studentInvoices.length,
+          billed,
+          paid,
+          outstanding,
+          latestDue: latestDue?.dueDate || latestDue?.createdAt || null,
+        };
+      })
     : [];
 
   const classStatusCounts = classStatusRows.reduce(
@@ -878,11 +878,10 @@ const PaymentManagement = ({ userId, role, user }) => {
                         </span>
                       </div>
                       <span
-                        className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                          template.isActive
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-full ${template.isActive
                             ? "bg-green-100 text-green-700"
                             : "bg-gray-100 text-gray-600"
-                        }`}
+                          }`}
                       >
                         {template.isActive ? "Active" : "Paused"}
                       </span>
@@ -903,9 +902,8 @@ const PaymentManagement = ({ userId, role, user }) => {
                         <span className="font-semibold text-gray-800">
                           {isCompulsory
                             ? "All active students"
-                            : `${targetCount} selected student${
-                                targetCount === 1 ? "" : "s"
-                              }`}
+                            : `${targetCount} selected student${targetCount === 1 ? "" : "s"
+                            }`}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -953,22 +951,20 @@ const PaymentManagement = ({ userId, role, user }) => {
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab("invoices")}
-            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-              activeTab === "invoices"
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "invoices"
                 ? "border-indigo-500 text-indigo-600"
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+              }`}
           >
             Invoices / Fees
           </button>
           {isAdmin && (
             <button
               onClick={() => setActiveTab("pending-verification")}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${
-                activeTab === "pending-verification"
+              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === "pending-verification"
                   ? "border-amber-500 text-amber-600"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
+                }`}
             >
               Pending Verification
               {payments.filter(p => p.status === "pending_verification").length > 0 && (
@@ -980,11 +976,10 @@ const PaymentManagement = ({ userId, role, user }) => {
           )}
           <button
             onClick={() => setActiveTab("ledger")}
-            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-              activeTab === "ledger"
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "ledger"
                 ? "border-indigo-500 text-indigo-600"
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+              }`}
           >
             Payment Ledger
           </button>
@@ -1000,22 +995,20 @@ const PaymentManagement = ({ userId, role, user }) => {
               <button
                 type="button"
                 onClick={() => setClassStatusView("active")}
-                className={`px-3 py-2 rounded-xl text-sm font-medium border transition ${
-                  classStatusView === "active"
+                className={`px-3 py-2 rounded-xl text-sm font-medium border transition ${classStatusView === "active"
                     ? "bg-slate-900 text-white border-slate-900"
                     : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 Active ({activeClassStatusStudents.length})
               </button>
               <button
                 type="button"
                 onClick={() => setClassStatusView("history")}
-                className={`px-3 py-2 rounded-xl text-sm font-medium border transition ${
-                  classStatusView === "history"
+                className={`px-3 py-2 rounded-xl text-sm font-medium border transition ${classStatusView === "history"
                     ? "bg-slate-900 text-white border-slate-900"
                     : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 History ({historyClassStatusStudents.length})
               </button>
@@ -1027,11 +1020,10 @@ const PaymentManagement = ({ userId, role, user }) => {
             <button
               type="button"
               onClick={() => { setSelectedClassFilter("all"); setClassStatusPage(1); }}
-              className={`px-3 py-2 rounded-xl text-sm font-medium border transition ${
-                selectedClassFilter === "all"
+              className={`px-3 py-2 rounded-xl text-sm font-medium border transition ${selectedClassFilter === "all"
                   ? "bg-slate-900 text-white border-slate-900"
                   : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-              }`}
+                }`}
             >
               All Classes
             </button>
@@ -1042,11 +1034,10 @@ const PaymentManagement = ({ userId, role, user }) => {
                   key={classId}
                   type="button"
                   onClick={() => { setSelectedClassFilter(classId); setClassStatusPage(1); }}
-                  className={`px-3 py-2 rounded-xl text-sm font-medium border transition ${
-                    selectedClassFilter === classId
+                  className={`px-3 py-2 rounded-xl text-sm font-medium border transition ${selectedClassFilter === classId
                       ? "bg-indigo-600 text-white border-indigo-600"
                       : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   {getClassLabel(classItem)}
                 </button>
@@ -1131,14 +1122,14 @@ const PaymentManagement = ({ userId, role, user }) => {
                   const monthFilteredRows = classStatusMonth === "all"
                     ? classStatusRows
                     : classStatusRows.filter((row) =>
-                        invoices.some((inv) => {
-                          if (String(getIdValue(inv.studentId)) !== String(row.studentId)) return false;
-                          if (!inv.createdAt) return false;
-                          const d = new Date(inv.createdAt);
-                          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-                          return key === classStatusMonth;
-                        })
-                      );
+                      invoices.some((inv) => {
+                        if (String(getIdValue(inv.studentId)) !== String(row.studentId)) return false;
+                        if (!inv.createdAt) return false;
+                        const d = new Date(inv.createdAt);
+                        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+                        return key === classStatusMonth;
+                      })
+                    );
 
                   const sortedRows = [...monthFilteredRows].sort((a, b) =>
                     a.studentName.toLowerCase().localeCompare(b.studentName.toLowerCase())
@@ -1208,14 +1199,14 @@ const PaymentManagement = ({ userId, role, user }) => {
               const monthFilteredRows = classStatusMonth === "all"
                 ? classStatusRows
                 : classStatusRows.filter((row) =>
-                    invoices.some((inv) => {
-                      if (String(getIdValue(inv.studentId)) !== String(row.studentId)) return false;
-                      if (!inv.createdAt) return false;
-                      const d = new Date(inv.createdAt);
-                      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-                      return key === classStatusMonth;
-                    })
-                  );
+                  invoices.some((inv) => {
+                    if (String(getIdValue(inv.studentId)) !== String(row.studentId)) return false;
+                    if (!inv.createdAt) return false;
+                    const d = new Date(inv.createdAt);
+                    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+                    return key === classStatusMonth;
+                  })
+                );
               const sortedRows = [...monthFilteredRows].sort((a, b) =>
                 a.studentName.toLowerCase().localeCompare(b.studentName.toLowerCase())
               );
@@ -1241,11 +1232,10 @@ const PaymentManagement = ({ userId, role, user }) => {
                         key={pg}
                         type="button"
                         onClick={() => setClassStatusPage(pg)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                          pg === safeCsPage
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${pg === safeCsPage
                             ? "bg-indigo-600 text-white"
                             : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
-                        }`}
+                          }`}
                       >
                         {pg}
                       </button>
@@ -1266,7 +1256,7 @@ const PaymentManagement = ({ userId, role, user }) => {
         </div>
       )}
 
-            {activeTab === "invoices" && (
+      {activeTab === "invoices" && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           {isAdmin && (() => {
             // Derive unique months from displayedInvoices for month tab
@@ -1294,36 +1284,35 @@ const PaymentManagement = ({ userId, role, user }) => {
             const monthFiltered = adminInvoiceMonth === "all"
               ? sortedInvoices
               : sortedInvoices.filter((inv) => {
-                  if (!inv.createdAt) return false;
-                  const d = new Date(inv.createdAt);
-                  const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-                  return key === adminInvoiceMonth;
-                });
+                if (!inv.createdAt) return false;
+                const d = new Date(inv.createdAt);
+                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+                return key === adminInvoiceMonth;
+              });
 
             // Apply status filter
             const statusFiltered =
               adminInvoiceFilter === "all"
                 ? monthFiltered
                 : adminInvoiceFilter === "paid"
-                ? monthFiltered.filter((inv) => inv.status === "paid")
-                : monthFiltered.filter((inv) => inv.status !== "paid");
+                  ? monthFiltered.filter((inv) => inv.status === "paid")
+                  : monthFiltered.filter((inv) => inv.status !== "paid");
 
             // Apply search filter
             const searchTerm = adminInvoiceSearch.trim().toLowerCase();
             const filteredInvoices = searchTerm
               ? statusFiltered.filter((inv) =>
-                  getStudentName(inv.studentId).toLowerCase().includes(searchTerm)
-                )
+                getStudentName(inv.studentId).toLowerCase().includes(searchTerm)
+              )
               : statusFiltered;
 
             const unpaidCount = monthFiltered.filter((inv) => inv.status !== "paid").length;
             const paidCount = monthFiltered.filter((inv) => inv.status === "paid").length;
 
             const tabCls = (key) =>
-              `px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                adminInvoiceFilter === key
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "text-gray-500 hover:bg-gray-100"
+              `px-3 py-1.5 rounded-lg text-xs font-semibold transition ${adminInvoiceFilter === key
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "text-gray-500 hover:bg-gray-100"
               }`;
 
             return (
@@ -1332,7 +1321,7 @@ const PaymentManagement = ({ userId, role, user }) => {
                 <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/60 space-y-3">
                   {/* Title + record count */}
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-gray-900">Invoice / Fee Records</p>
+                    <p className="text-lg font-bold text-gray-900">Invoice / Fee Records</p>
                     <span className="inline-flex items-center rounded-full bg-white border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600">
                       {filteredInvoices.length} record{filteredInvoices.length === 1 ? "" : "s"}
                     </span>
@@ -1407,101 +1396,100 @@ const PaymentManagement = ({ userId, role, user }) => {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {(() => {
-                        const PAGE_SIZE = 10;
-                        const totalInvPages = Math.max(1, Math.ceil(filteredInvoices.length / PAGE_SIZE));
-                        const safePage = Math.min(adminInvoicePage, totalInvPages);
-                        const pageSlice = filteredInvoices.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+                      const PAGE_SIZE = 10;
+                      const totalInvPages = Math.max(1, Math.ceil(filteredInvoices.length / PAGE_SIZE));
+                      const safePage = Math.min(adminInvoicePage, totalInvPages);
+                      const pageSlice = filteredInvoices.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-                        const pageBtnCls = (active) =>
-                          `px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                            active ? "bg-indigo-600 text-white" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
-                          }`;
+                      const pageBtnCls = (active) =>
+                        `px-3 py-1.5 rounded-lg text-xs font-semibold transition ${active ? "bg-indigo-600 text-white" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                        }`;
 
-                        return (
-                          <>
-                            {pageSlice.length === 0 ? (
-                              <tr>
-                                <td colSpan="9" className="px-6 py-8 text-center text-gray-500">
-                                  {adminInvoiceSearch
-                                    ? `No results for "${adminInvoiceSearch}".`
-                                    : adminInvoiceFilter !== "all"
+                      return (
+                        <>
+                          {pageSlice.length === 0 ? (
+                            <tr>
+                              <td colSpan="9" className="px-6 py-8 text-center text-gray-500">
+                                {adminInvoiceSearch
+                                  ? `No results for "${adminInvoiceSearch}".`
+                                  : adminInvoiceFilter !== "all"
                                     ? `No ${adminInvoiceFilter} invoices found.`
                                     : "No invoices found."}
-                                </td>
-                              </tr>
-                            ) : (
-                              pageSlice.map((invoice, idx) => {
-                                const globalIndex = (safePage - 1) * PAGE_SIZE + idx;
-                                const invoicePayments = getPaymentsForInvoice(invoice._id);
-                                const withReceipt = invoicePayments.find((p) => p.receiptUrl);
-                                return (
-                                  <tr key={invoice._id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4 text-gray-400 font-bold text-sm select-none">{globalIndex + 1}.</td>
-                                    <td className="px-6 py-4 font-medium text-gray-900">{getStudentName(invoice.studentId)}</td>
-                                    <td className="px-6 py-4">
-                                      <div className="font-medium text-gray-900">{invoice.feeItem || invoice.category || "Fee"}</div>
-                                      <div className="text-xs text-gray-500 mt-1">
-                                        {invoice.category || "Uncategorized"}
-                                        {invoice.isAutomated ? " • Automated" : " • Manual"}
-                                      </div>
-                                    </td>
-                                    <td className="px-6 py-4 font-semibold text-gray-900">RM {formatMoney(invoice.amount)}</td>
-                                    <td className="px-6 py-4">
-                                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1 w-max ${STATUS_META[invoice.status || "unpaid"].className}`}>
-                                        {invoice.status === "paid" ? <CheckCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-                                        {STATUS_META[invoice.status || "unpaid"].label}
-                                      </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-gray-500">
-                                      <div>{new Date(invoice.createdAt).toLocaleDateString()}</div>
-                                      <div className="text-xs mt-1">Due: {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : "-"}</div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                      {withReceipt ? (
-                                        <a
-                                          href={getReceiptUrl(withReceipt.receiptUrl)}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="inline-flex items-center gap-1.5 text-xs text-green-700 font-semibold bg-green-50 border border-green-200 px-2.5 py-1.5 rounded-lg hover:bg-green-100 transition"
-                                        >
-                                          <Paperclip className="w-3.5 h-3.5" /> View Receipt
-                                        </a>
-                                      ) : (
-                                        <span className="text-gray-400 text-xs italic">None</span>
-                                      )}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                      {invoice.status === "paid" ? (
-                                        <button
-                                          type="button"
-                                          onClick={() => downloadInvoiceReceiptPdf(invoice, invoicePayments)}
-                                          className="inline-flex items-center gap-1 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1.5 rounded-lg hover:bg-indigo-100 transition"
-                                        >
-                                          <Download className="w-3 h-3" /> PDF Receipt
-                                        </button>
-                                      ) : (
-                                        <span className="text-gray-400 text-xs italic">Pending</span>
-                                      )}
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                      {invoice.status !== "paid" ? (
-                                        <button
-                                          onClick={() => openPaymentModal(invoice)}
-                                          className="text-xs bg-indigo-600 text-white font-medium px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition"
-                                        >
-                                          Record Payment
-                                        </button>
-                                      ) : (
-                                        <span className="text-xs text-gray-400 font-medium">Cleared</span>
-                                      )}
-                                    </td>
-                                  </tr>
-                                );
-                              })
-                            )}
-                          </>
-                        );
-                      })()}
+                              </td>
+                            </tr>
+                          ) : (
+                            pageSlice.map((invoice, idx) => {
+                              const globalIndex = (safePage - 1) * PAGE_SIZE + idx;
+                              const invoicePayments = getPaymentsForInvoice(invoice._id);
+                              const withReceipt = invoicePayments.find((p) => p.receiptUrl);
+                              return (
+                                <tr key={invoice._id} className="hover:bg-gray-50 transition-colors">
+                                  <td className="px-6 py-4 text-gray-400 font-bold text-sm select-none">{globalIndex + 1}.</td>
+                                  <td className="px-6 py-4 font-medium text-gray-900">{getStudentName(invoice.studentId)}</td>
+                                  <td className="px-6 py-4">
+                                    <div className="font-medium text-gray-900">{invoice.feeItem || invoice.category || "Fee"}</div>
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      {invoice.category || "Uncategorized"}
+                                      {invoice.isAutomated ? " • Automated" : " • Manual"}
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 font-semibold text-gray-900">RM {formatMoney(invoice.amount)}</td>
+                                  <td className="px-6 py-4">
+                                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1 w-max ${STATUS_META[invoice.status || "unpaid"].className}`}>
+                                      {invoice.status === "paid" ? <CheckCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                                      {STATUS_META[invoice.status || "unpaid"].label}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4 text-gray-500">
+                                    <div>{new Date(invoice.createdAt).toLocaleDateString()}</div>
+                                    <div className="text-xs mt-1">Due: {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : "-"}</div>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    {withReceipt ? (
+                                      <a
+                                        href={getReceiptUrl(withReceipt.receiptUrl)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1.5 text-xs text-green-700 font-semibold bg-green-50 border border-green-200 px-2.5 py-1.5 rounded-lg hover:bg-green-100 transition"
+                                      >
+                                        <Paperclip className="w-3.5 h-3.5" /> View Receipt
+                                      </a>
+                                    ) : (
+                                      <span className="text-gray-400 text-xs italic">None</span>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    {invoice.status === "paid" ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => downloadInvoiceReceiptPdf(invoice, invoicePayments)}
+                                        className="inline-flex items-center gap-1 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1.5 rounded-lg hover:bg-indigo-100 transition"
+                                      >
+                                        <Download className="w-3 h-3" /> PDF Receipt
+                                      </button>
+                                    ) : (
+                                      <span className="text-gray-400 text-xs italic">Pending</span>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4 text-right">
+                                    {invoice.status !== "paid" ? (
+                                      <button
+                                        onClick={() => openPaymentModal(invoice)}
+                                        className="text-xs bg-indigo-600 text-white font-medium px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition"
+                                      >
+                                        Record Payment
+                                      </button>
+                                    ) : (
+                                      <span className="text-xs text-gray-400 font-medium">Cleared</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </>
+                      );
+                    })()}
                   </tbody>
                 </table>
 
@@ -1530,11 +1518,10 @@ const PaymentManagement = ({ userId, role, user }) => {
                             key={pg}
                             type="button"
                             onClick={() => setAdminInvoicePage(pg)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                              pg === safePage
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${pg === safePage
                                 ? "bg-indigo-600 text-white"
                                 : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
-                            }`}
+                              }`}
                           >
                             {pg}
                           </button>
@@ -1733,27 +1720,27 @@ const PaymentManagement = ({ userId, role, user }) => {
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                <p className="font-bold text-gray-900">
-                                  RM {formatMoney(inv.amount)}
-                                </p>
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                                  <CheckCircle className="w-3 h-3" /> Paid
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    downloadInvoiceReceiptPdf(
-                                      inv,
-                                      getPaymentsForInvoice(inv._id)
-                                    )
-                                  }
-                                  className="inline-flex items-center gap-1 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1.5 rounded-lg hover:bg-indigo-100 transition"
-                                >
-                                  <Download className="w-3 h-3" /> PDF Receipt
-                                </button>
+                                  <p className="font-bold text-gray-900">
+                                    RM {formatMoney(inv.amount)}
+                                  </p>
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                    <CheckCircle className="w-3 h-3" /> Paid
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      downloadInvoiceReceiptPdf(
+                                        inv,
+                                        getPaymentsForInvoice(inv._id)
+                                      )
+                                    }
+                                    className="inline-flex items-center gap-1 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1.5 rounded-lg hover:bg-indigo-100 transition"
+                                  >
+                                    <Download className="w-3 h-3" /> PDF Receipt
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            ))}
                         </div>
                       )}
                     </div>
@@ -2127,11 +2114,10 @@ const PaymentManagement = ({ userId, role, user }) => {
                       return (
                         <label
                           key={studentId}
-                          className={`rounded-xl border p-3 cursor-pointer transition ${
-                            selected
+                          className={`rounded-xl border p-3 cursor-pointer transition ${selected
                               ? "border-indigo-300 bg-indigo-50"
                               : "border-gray-200 bg-white hover:bg-gray-50"
-                          }`}
+                            }`}
                         >
                           <div className="flex items-start gap-3">
                             <input

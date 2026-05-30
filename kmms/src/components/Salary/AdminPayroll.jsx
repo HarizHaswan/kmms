@@ -306,6 +306,7 @@ const AdminPayroll = () => {
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="bg-gray-50/50 text-gray-500 uppercase text-[10px] font-black tracking-widest border-b border-gray-100">
+                    <th className="px-6 py-4 w-10">#</th>
                     <th className="px-6 py-4">Staff Details</th>
                     <th className="px-6 py-4 text-center">Base</th>
                     <th className="px-6 py-4 text-center">OT Pay</th>
@@ -320,7 +321,7 @@ const AdminPayroll = () => {
                 <tbody className="divide-y divide-gray-50">
                   {filteredRecords.length === 0 ? (
                     <tr>
-                      <td colSpan="9" className="px-6 py-20 text-center">
+                      <td colSpan="10" className="px-6 py-20 text-center">
                         <div className="flex flex-col items-center gap-3 opacity-40">
                           <FileText className="w-12 h-12" />
                           <p className="font-bold text-lg text-gray-500 uppercase">No records for {month}/{year}</p>
@@ -329,13 +330,14 @@ const AdminPayroll = () => {
                       </td>
                     </tr>
                   ) : (
-                    filteredRecords.map((r) => {
+                    filteredRecords.map((r, idx) => {
                       const isEditing = editingId === r._id;
                       const isStatDetails = showStatDetails === r._id;
-
+ 
                       return (
                         <React.Fragment key={r._id}>
                           <tr className={`hover:bg-indigo-50/30 transition-colors ${isEditing ? "bg-indigo-50/50" : ""}`}>
+                            <td className="px-6 py-4 font-bold text-gray-400 select-none">{idx + 1}.</td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center font-black text-indigo-700 text-xs">
@@ -503,7 +505,7 @@ const AdminPayroll = () => {
                           {/* Statutory Breakdown Edit Panel */}
                           {isStatDetails && isEditing && (
                             <tr className="bg-indigo-50/50">
-                              <td colSpan="9" className="px-8 py-6 border-y border-indigo-100">
+                              <td colSpan="10" className="px-8 py-6 border-y border-indigo-100">
                                 <div className="max-w-4xl mx-auto space-y-6">
                                   <div className="flex items-center gap-2 mb-4">
                                     <ShieldCheck className="w-5 h-5 text-indigo-600" />

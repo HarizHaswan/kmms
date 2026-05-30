@@ -65,6 +65,12 @@ exports.updateTeacher = async (req, res) => {
   try {
     // Note: This does NOT update password currently. 
     // If you need to update password, use .save() instead of findByIdAndUpdate
+    
+    // Clean empty password from update body
+    if (req.body.hasOwnProperty("password") && !req.body.password) {
+      delete req.body.password;
+    }
+
     const updated = await User.findByIdAndUpdate(
       req.params.id,
       req.body,

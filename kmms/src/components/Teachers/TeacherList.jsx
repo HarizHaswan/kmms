@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, User, Briefcase, DollarSign, Save, X, Search } from "lucide-react";
+import { Plus, Edit, Trash2, User, Briefcase, DollarSign, Save, X, Search, Eye, EyeOff } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "../ui/table";
 
-import { getClasses } from "../../api/classes"; 
+import { getClasses } from "../../api/classes";
 
 const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -29,6 +29,11 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
   const [activeTab, setActiveTab] = useState("Active");
   const [availableClasses, setAvailableClasses] = useState([]);
   const [search, setSearch] = useState("");
+  const [expandedTeacherId, setExpandedTeacherId] = useState(null);
+
+  const toggleExpand = (id) => {
+    setExpandedTeacherId(expandedTeacherId === id ? null : id);
+  };
 
   const [formData, setFormData] = useState({
     name: "",
@@ -101,6 +106,9 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
     };
 
     if (editingTeacher) {
+      if (!payload.password) {
+        delete payload.password;
+      }
       await onUpdate(editingTeacher._id || editingTeacher.id, payload);
     } else {
       await onAdd(payload);
@@ -110,8 +118,8 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
   };
 
   const filteredTeachers = teachers.filter(
-    (t) => (t.status || "Active") === activeTab && 
-    (t.name.toLowerCase().includes(search.toLowerCase()) || t.email.toLowerCase().includes(search.toLowerCase()))
+    (t) => (t.status || "Active") === activeTab &&
+      (t.name.toLowerCase().includes(search.toLowerCase()) || t.email.toLowerCase().includes(search.toLowerCase()))
   );
 
   return (
@@ -120,7 +128,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black text-gray-900 tracking-tight uppercase">Teacher Management</h2>
-          <p className="text-sm text-gray-500">Manage all teachers and assignments</p>
+          <p className="text-sm text-gray-500">Manage all teacher's details.</p>
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -274,7 +282,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                     <Input
                       type="number"
                       value={formData.salaryProfile.baseSalary}
-                      onChange={(e) => setFormData({ ...formData, salaryProfile: { ...formData.salaryProfile, baseSalary: Number(e.target.value) }})}
+                      onChange={(e) => setFormData({ ...formData, salaryProfile: { ...formData.salaryProfile, baseSalary: Number(e.target.value) } })}
                       required
                       className="bg-white border-gray-200 focus:ring-2 focus:ring-emerald-200 rounded-xl py-6"
                     />
@@ -284,7 +292,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                     <Input
                       type="number"
                       value={formData.salaryProfile.overtimeRate}
-                      onChange={(e) => setFormData({ ...formData, salaryProfile: { ...formData.salaryProfile, overtimeRate: Number(e.target.value) }})}
+                      onChange={(e) => setFormData({ ...formData, salaryProfile: { ...formData.salaryProfile, overtimeRate: Number(e.target.value) } })}
                       required
                       className="bg-white border-gray-200 focus:ring-2 focus:ring-emerald-200 rounded-xl py-6"
                     />
@@ -294,7 +302,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                     <Input
                       placeholder="EPF Number"
                       value={formData.salaryProfile.epfNo}
-                      onChange={(e) => setFormData({ ...formData, salaryProfile: { ...formData.salaryProfile, epfNo: e.target.value }})}
+                      onChange={(e) => setFormData({ ...formData, salaryProfile: { ...formData.salaryProfile, epfNo: e.target.value } })}
                       className="bg-white border-gray-200 focus:ring-2 focus:ring-emerald-200 rounded-xl py-6"
                     />
                   </div>
@@ -303,7 +311,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                     <Input
                       placeholder="Tax Number"
                       value={formData.salaryProfile.taxNo}
-                      onChange={(e) => setFormData({ ...formData, salaryProfile: { ...formData.salaryProfile, taxNo: e.target.value }})}
+                      onChange={(e) => setFormData({ ...formData, salaryProfile: { ...formData.salaryProfile, taxNo: e.target.value } })}
                       className="bg-white border-gray-200 focus:ring-2 focus:ring-emerald-200 rounded-xl py-6"
                     />
                   </div>
@@ -312,7 +320,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                     <Input
                       placeholder="e.g. Maybank"
                       value={formData.salaryProfile.bankName}
-                      onChange={(e) => setFormData({ ...formData, salaryProfile: { ...formData.salaryProfile, bankName: e.target.value }})}
+                      onChange={(e) => setFormData({ ...formData, salaryProfile: { ...formData.salaryProfile, bankName: e.target.value } })}
                       className="bg-white border-gray-200 focus:ring-2 focus:ring-emerald-200 rounded-xl py-6"
                     />
                   </div>
@@ -321,7 +329,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                     <Input
                       placeholder="Account Number"
                       value={formData.salaryProfile.bankAccountNo}
-                      onChange={(e) => setFormData({ ...formData, salaryProfile: { ...formData.salaryProfile, bankAccountNo: e.target.value }})}
+                      onChange={(e) => setFormData({ ...formData, salaryProfile: { ...formData.salaryProfile, bankAccountNo: e.target.value } })}
                       className="bg-white border-gray-200 focus:ring-2 focus:ring-emerald-200 rounded-xl py-6"
                     />
                   </div>
@@ -349,11 +357,10 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`pb-4 px-6 text-xs font-black uppercase tracking-widest transition-all border-b-4 ${
-                activeTab === tab
+              className={`pb-4 px-6 text-xs font-black uppercase tracking-widest transition-all border-b-4 ${activeTab === tab
                   ? "border-emerald-500 text-emerald-600"
                   : "border-transparent text-gray-400 hover:text-gray-600"
-              }`}
+                }`}
             >
               {tab} Teachers
             </button>
@@ -361,7 +368,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
         </div>
         <div className="relative w-full md:w-64 mb-2">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input 
+          <input
             type="text"
             placeholder="Quick search staff..."
             value={search}
@@ -390,81 +397,187 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
 
               <TableBody>
                 {filteredTeachers.map((teacher, index) => (
-                  <TableRow key={teacher._id || teacher.id} className="hover:bg-emerald-50/30 transition-colors">
-                    <TableCell className="px-6 py-4 font-bold text-gray-400 text-xs">{index + 1}.</TableCell>
-                    <TableCell className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-xs uppercase shadow-inner">
-                          {teacher.profileImage ? (
-                            <img src={teacher.profileImage} alt="" className="w-full h-full rounded-xl object-cover" />
-                          ) : (
-                            teacher.name[0]
-                          )}
-                        </div>
+                  <React.Fragment key={teacher._id || teacher.id}>
+                    <TableRow className="hover:bg-emerald-50/30 transition-colors">
+                      <TableCell className="px-6 py-4 font-bold text-gray-400 text-xs">{index + 1}.</TableCell>
+                      <TableCell className="px-6 py-4">
                         <div>
                           <p className="font-bold text-gray-900 leading-tight">{teacher.name}</p>
                           <p className="text-[10px] text-gray-400 font-medium">{teacher.email}</p>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <div className="space-y-0.5">
-                        <p className="text-xs font-bold text-gray-700">{teacher.icNumber || "—"}</p>
-                        <p className="text-[10px] text-gray-400 font-medium">{teacher.phone || "—"}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <Badge variant="outline" className="rounded-lg border-emerald-100 text-emerald-700 bg-emerald-50/50 text-[10px] font-bold px-2 py-0.5">
-                        {teacher.classAssigned || "Unassigned"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="px-6 py-4 text-xs font-medium text-gray-500">
-                      {teacher.hireDate ? new Date(teacher.hireDate).toLocaleDateString("en-MY", { year: 'numeric', month: 'short', day: 'numeric' }) : "—"}
-                    </TableCell>
-                    <TableCell className="px-6 py-4 text-center">
-                      <Badge
-                        className={`rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                          teacher.status === "Active"
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-50"
-                            : "bg-gray-50 text-gray-500 border-gray-100 hover:bg-gray-50"
-                        }`}
-                      >
-                        {teacher.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="px-6 py-4 text-right">
-                      <button
-                        className="hover:bg-emerald-100 hover:text-emerald-700 text-gray-400 p-2 rounded-xl transition-all"
-                        onClick={() => {
-                          setEditingTeacher(teacher);
-                          setFormData({
-                            name: teacher.name || "",
-                            email: teacher.email || "",
-                            phone: teacher.phone || "",
-                            icNumber: teacher.icNumber || "",
-                            password: "",
-                            classAssigned: teacher.classAssigned || "",
-                            qualification: teacher.qualification || "",
-                            hireDate: teacher.hireDate ? teacher.hireDate.split("T")[0] : "",
-                            status: teacher.status || "Active",
-                            salaryProfile: teacher.salaryProfile || {
-                              baseSalary: 0,
-                              overtimeRate: 0,
-                              bankName: "",
-                              bankAccountNo: "",
-                              epfNo: "",
-                              taxNo: "",
-                              eisNo: "",
-                              pcbNo: ""
-                            }
-                          });
-                          setIsDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                    </TableCell>
-                  </TableRow>
+                      </TableCell>
+                      <TableCell className="px-6 py-4">
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-bold text-gray-700">{teacher.icNumber || "—"}</p>
+                          <p className="text-[10px] text-gray-400 font-medium">{teacher.phone || "—"}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-6 py-4">
+                        <Badge variant="outline" className="rounded-lg border-emerald-100 text-emerald-700 bg-emerald-50/50 text-[10px] font-bold px-2 py-0.5">
+                          {teacher.classAssigned || "Unassigned"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="px-6 py-4 text-xs font-medium text-gray-500">
+                        {teacher.hireDate ? new Date(teacher.hireDate).toLocaleDateString("en-MY", { year: 'numeric', month: 'short', day: 'numeric' }) : "—"}
+                      </TableCell>
+                      <TableCell className="px-6 py-4 text-center">
+                        <Badge
+                          className={`rounded-full text-[9px] font-black uppercase tracking-widest border ${teacher.status === "Active"
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-50"
+                              : "bg-gray-50 text-gray-500 border-gray-100 hover:bg-gray-50"
+                            }`}
+                        >
+                          {teacher.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-1">
+                          <button
+                            className={`p-2 rounded-xl transition-all ${expandedTeacherId === (teacher._id || teacher.id)
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "hover:bg-emerald-50 hover:text-emerald-600 text-gray-400"
+                              }`}
+                            onClick={() => toggleExpand(teacher._id || teacher.id)}
+                            title={expandedTeacherId === (teacher._id || teacher.id) ? "Hide Details" : "View All Details"}
+                          >
+                            {expandedTeacherId === (teacher._id || teacher.id) ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
+                          </button>
+
+                          <button
+                            className="hover:bg-emerald-50 hover:text-emerald-600 text-gray-400 p-2 rounded-xl transition-all"
+                            onClick={() => {
+                              setEditingTeacher(teacher);
+                              setFormData({
+                                name: teacher.name || "",
+                                email: teacher.email || "",
+                                phone: teacher.phone || "",
+                                icNumber: teacher.icNumber || "",
+                                password: "",
+                                classAssigned: teacher.classAssigned || "",
+                                qualification: teacher.qualification || "",
+                                hireDate: teacher.hireDate ? teacher.hireDate.split("T")[0] : "",
+                                status: teacher.status || "Active",
+                                salaryProfile: teacher.salaryProfile || {
+                                  baseSalary: 0,
+                                  overtimeRate: 0,
+                                  bankName: "",
+                                  bankAccountNo: "",
+                                  epfNo: "",
+                                  taxNo: "",
+                                  eisNo: "",
+                                  pcbNo: ""
+                                }
+                              });
+                              setIsDialogOpen(true);
+                            }}
+                            title="Edit Profile"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+
+                    {expandedTeacherId === (teacher._id || teacher.id) && (
+                      <TableRow className="bg-gray-50/50 border-b border-gray-100/80 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <TableCell colSpan={7} className="px-8 py-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
+                            {/* Left Column: Personal & Employment */}
+                            <div className="space-y-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
+                              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-50/20 to-primary-light/5 rounded-bl-full pointer-events-none" />
+                              <h4 className="font-black text-[10px] uppercase tracking-widest text-emerald-600 border-b border-gray-50 pb-2 flex items-center gap-2">
+                                <User className="w-3.5 h-3.5" /> Profile & Personal Details
+                              </h4>
+                              <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs font-semibold">
+                                <div>
+                                  <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5">Full Name</span>
+                                  <span className="text-gray-800 font-bold">{teacher.name}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5">Email Address</span>
+                                  <span className="text-gray-800 font-bold">{teacher.email}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5">Phone Number</span>
+                                  <span className="text-gray-800 font-bold">{teacher.phone || "—"}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5">IC / Passport</span>
+                                  <span className="text-gray-800 font-bold">{teacher.icNumber || "—"}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5">Qualification</span>
+                                  <span className="text-gray-800 font-bold">{teacher.qualification || "—"}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5">Class Assigned</span>
+                                  <span className="text-emerald-700 font-bold">{teacher.classAssigned || "Unassigned"}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5">Hire Date</span>
+                                  <span className="text-gray-800 font-bold">{teacher.hireDate ? new Date(teacher.hireDate).toLocaleDateString("en-MY", { year: 'numeric', month: 'long', day: 'numeric' }) : "—"}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5">Account Status</span>
+                                  <span className={`capitalize font-bold ${teacher.status === 'Active' ? 'text-emerald-600' : 'text-gray-500'}`}>{teacher.status || "Active"}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Right Column: Payroll & Statutory */}
+                            <div className="space-y-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
+                              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-50/20 to-primary-light/5 rounded-bl-full pointer-events-none" />
+                              <h4 className="font-black text-[10px] uppercase tracking-widest text-emerald-600 border-b border-gray-50 pb-2 flex items-center gap-2">
+                                <DollarSign className="w-3.5 h-3.5" /> Salary & Banking Details
+                              </h4>
+                              <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs font-semibold">
+                                <div>
+                                  <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5">Basic Salary</span>
+                                  <span className="text-gray-800 font-bold">RM {teacher.salaryProfile?.baseSalary ?? "0"}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5">Overtime Rate</span>
+                                  <span className="text-gray-800 font-bold">RM {teacher.salaryProfile?.overtimeRate ?? "0"} / hour</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5">Bank Name</span>
+                                  <span className="text-gray-800 font-bold">{teacher.salaryProfile?.bankName || "—"}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5">Account Number</span>
+                                  <span className="text-gray-800 font-bold">{teacher.salaryProfile?.bankAccountNo || "—"}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5">EPF Number</span>
+                                  <span className="text-gray-800 font-bold">{teacher.salaryProfile?.epfNo || "—"}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5">Tax Number</span>
+                                  <span className="text-gray-800 font-bold">{teacher.salaryProfile?.taxNo || "—"}</span>
+                                </div>
+                                {teacher.salaryProfile?.eisNo && (
+                                  <div>
+                                    <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5">EIS Number</span>
+                                    <span className="text-gray-800 font-bold">{teacher.salaryProfile.eisNo}</span>
+                                  </div>
+                                )}
+                                {teacher.salaryProfile?.pcbNo && (
+                                  <div>
+                                    <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5">PCB Number</span>
+                                    <span className="text-gray-800 font-bold">{teacher.salaryProfile.pcbNo}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
                 ))}
 
                 {filteredTeachers.length === 0 && (

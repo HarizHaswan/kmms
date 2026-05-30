@@ -268,6 +268,30 @@ router.post("/enroll", async (req, res, next) => {
 });
 
 // =============================
+// PUT /api/students/parent/address (Parent update home address)
+// =============================
+router.put("/parent/address", protect, authorize("parent"), async (req, res, next) => {
+  try {
+    const { homeAddress } = req.body;
+    const trimmedAddress = homeAddress ? homeAddress.trim() : "";
+
+    // Update all student records linked to this parent
+    const result = await Student.updateMany(
+      { parentId: req.user._id },
+      { $set: { homeAddress: trimmedAddress } }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: "No child student records found linked to this account" });
+    }
+
+    res.json({ message: "Home address updated successfully", homeAddress: trimmedAddress });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// =============================
 // GET /api/students/pending (Admin)
 // =============================
 router.get("/pending", protect, authorize("admin"), async (req, res, next) => {

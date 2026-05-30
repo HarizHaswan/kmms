@@ -29,6 +29,52 @@ exports.createTimetable = async (req, res) => {
     color,
   } = req.body;
 
+  // 1. Validate that start time is earlier than end time
+  if (startTime >= endTime) {
+    return res.status(400).json({
+      message: "Failed to add slot. Start time must be earlier than end time."
+    });
+  }
+
+  // 2. Check if overlap with fixed Snack Time (09:30 - 09:50)
+  const snackStart = "09:30";
+  const snackEnd = "09:50";
+  if (startTime < snackEnd && endTime > snackStart) {
+    return res.status(400).json({
+      message: `Failed to add slot. The time range ${startTime} - ${endTime} overlaps with the fixed Snack Time (09:30 - 09:50).`
+    });
+  }
+
+  // 3. Check if overlap with another subject in the same class on the same day
+  const classConflict = await Timetable.findOne({
+    classId,
+    day,
+    startTime: { $lt: endTime },
+    endTime: { $gt: startTime }
+  });
+  if (classConflict) {
+    return res.status(400).json({
+      message: `Failed to add slot. This time range overlaps with another session in this class (${classConflict.subject}: ${classConflict.startTime} - ${classConflict.endTime}).`
+    });
+  }
+
+  // 4. Check if overlap with the same teacher's other classes on the same day
+  if (teacherId) {
+    const teacherConflict = await Timetable.findOne({
+      teacherId,
+      day,
+      startTime: { $lt: endTime },
+      endTime: { $gt: startTime }
+    }).populate("classId", "className");
+
+    if (teacherConflict) {
+      const conflictClassName = teacherConflict.classId?.className || "another class";
+      return res.status(400).json({
+        message: `Failed to add slot. This teacher is already scheduled in Class ${conflictClassName} during this time (${teacherConflict.startTime} - ${teacherConflict.endTime}).`
+      });
+    }
+  }
+
   const slot = await Timetable.create({
     classId,
     day,

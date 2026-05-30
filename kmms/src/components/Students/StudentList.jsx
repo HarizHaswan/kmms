@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Plus, Edit, Search, GraduationCap, CheckCircle, X } from "lucide-react";
+import { Plus, Edit, Search, GraduationCap, CheckCircle, X, ChevronDown, Download } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
@@ -102,7 +102,7 @@ const StudentList = ({
     const studentName = student.name?.toLowerCase() || "";
     const className = student.classId?.className?.toLowerCase() || "";
     const parentName = student.parentName?.toLowerCase() || "";
-    
+
     const matchesSearch =
       !q ||
       studentName.includes(q) ||
@@ -204,6 +204,73 @@ const StudentList = ({
     }
   };
 
+  const handleExportExcel = () => {
+    if (filteredStudents.length === 0) {
+      alert("No student records available to export.");
+      return;
+    }
+
+    const headers = [
+      "Student Name",
+      "Gender",
+      "Date of Birth",
+      "Class Group",
+      "Age",
+      "Parent Name",
+      "Parent Phone",
+      "Parent Email",
+      "Home Address",
+      "Status"
+    ];
+
+    const rows = filteredStudents.map((s) => {
+      const dob = s.dateOfBirth ? new Date(s.dateOfBirth).toLocaleDateString() : "N/A";
+      const className = s.classId?.className || "N/A";
+      const age = getStudentAge(s);
+      const parentEmail = s.parentId?.email || "—";
+      
+      const escapeCsv = (val) => {
+        if (val === undefined || val === null) return "";
+        const stringVal = String(val);
+        if (stringVal.includes(",") || stringVal.includes("\n") || stringVal.includes('"')) {
+          return `"${stringVal.replace(/"/g, '""')}"`;
+        }
+        return stringVal;
+      };
+
+      return [
+        escapeCsv(s.name),
+        escapeCsv(s.gender),
+        escapeCsv(dob),
+        escapeCsv(className),
+        escapeCsv(age),
+        escapeCsv(s.parentName),
+        escapeCsv(s.parentPhoneNumber),
+        escapeCsv(parentEmail),
+        escapeCsv(s.homeAddress),
+        escapeCsv(s.status)
+      ];
+    });
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(r => r.join(","))
+    ].join("\n");
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    
+    const dateStr = new Date().toISOString().split("T")[0];
+    link.setAttribute("download", `SmartKindy_Students_${dateStr}.csv`);
+    link.style.visibility = "hidden";
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-10 font-inter">
       {/* HEADER + ADD BUTTONS */}
@@ -296,221 +363,220 @@ const StudentList = ({
               </DialogTrigger>
 
               <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] border-none shadow-premium p-0 scrollbar-hide">
-                 <div className="bg-gradient-to-r from-primary to-primary-dark p-8 text-white sticky top-0 z-10">
-                    <DialogHeader>
-                      <DialogTitle className="text-2xl font-bold font-poppins">
-                        {editingStudent ? "Edit Student Record" : "Enroll New Student"}
-                      </DialogTitle>
-                      <p className="text-white/80 text-sm font-medium">Please fill in the details below.</p>
-                    </DialogHeader>
-                 </div>
+                <div className="bg-gradient-to-r from-primary to-primary-dark p-8 text-white sticky top-0 z-10">
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl font-bold font-poppins">
+                      {editingStudent ? "Edit Student Record" : "Enroll New Student"}
+                    </DialogTitle>
+                    <p className="text-white/80 text-sm font-medium">Please fill in the details below.</p>
+                  </DialogHeader>
+                </div>
 
-                 <form onSubmit={handleAddSubmit} className="p-8 space-y-8">
-                    <div className="space-y-4">
-                       <h4 className="text-xs font-extrabold text-primary uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                          <div className="h-1 w-6 bg-primary rounded-full"></div>
-                          Child's Information
-                       </h4>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Full Name *</label>
-                            <input
-                              className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
-                              placeholder="Student's name"
-                              value={formData.name}
-                              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                              required
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Date of Birth *</label>
-                            <input
-                              type="date"
-                              className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
-                              value={formData.dateOfBirth}
-                              onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                              required
-                            />
-                          </div>
-                       </div>
-
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Gender *</label>
-                            <select
-                              className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-bold appearance-none cursor-pointer"
-                              value={formData.gender}
-                              onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                              required
-                            >
-                              <option value="">Select Gender</option>
-                              <option value="Male">Male</option>
-                              <option value="Female">Female</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Assigned Class *</label>
-                            <select
-                              className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-bold appearance-none cursor-pointer"
-                              value={formData.classId}
-                              onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
-                              required
-                            >
-                              <option value="">Select Class</option>
-                              {classes.map((c) => (
-                                <option key={c._id} value={c._id}>{c.name || c.className}</option>
-                              ))}
-                            </select>
-                          </div>
-                       </div>
+                <form onSubmit={handleAddSubmit} className="p-8 space-y-8">
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-extrabold text-primary uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                      <div className="h-1 w-6 bg-primary rounded-full"></div>
+                      Child's Information
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Full Name *</label>
+                        <input
+                          className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
+                          placeholder="Student's name"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Date of Birth *</label>
+                        <input
+                          type="date"
+                          className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
+                          value={formData.dateOfBirth}
+                          onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                          required
+                        />
+                      </div>
                     </div>
 
-                    <div className="space-y-4">
-                       <div className="flex items-center justify-between mb-4">
-                          <h4 className="text-xs font-extrabold text-secondary-dark uppercase tracking-[0.2em] flex items-center gap-2">
-                             <div className="h-1 w-6 bg-secondary rounded-full"></div>
-                             Parent / Guardian Details
-                          </h4>
-                          {!editingStudent && (
-                             <div className="flex items-center gap-2 bg-brand-bg px-3 py-1.5 rounded-xl border border-gray-100">
-                                <span className="text-[10px] font-bold text-brand-textSecondary uppercase">Existing Parent?</span>
-                                <input 
-                                  type="checkbox" 
-                                  className="w-4 h-4 text-primary rounded focus:ring-primary cursor-pointer"
-                                  checked={isExistingParent}
-                                  onChange={() => setIsExistingParent(!isExistingParent)}
-                                />
-                             </div>
-                          )}
-                       </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Gender *</label>
+                        <select
+                          className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-bold appearance-none cursor-pointer"
+                          value={formData.gender}
+                          onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                          required
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Assigned Class *</label>
+                        <select
+                          className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-bold appearance-none cursor-pointer"
+                          value={formData.classId}
+                          onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
+                          required
+                        >
+                          <option value="">Select Class</option>
+                          {classes.map((c) => (
+                            <option key={c._id} value={c._id}>{c.name || c.className}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
 
-                       {isExistingParent ? (
-                          <div className="p-4 bg-secondary/5 rounded-2xl border border-secondary/10 space-y-4">
-                             <div>
-                                <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5">Registered Parent Email *</label>
-                                <input
-                                  type="email"
-                                  className="w-full px-4 py-3 bg-white border border-transparent rounded-2xl shadow-sm focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all font-medium"
-                                  placeholder="Enter exact registered email"
-                                  value={formData.parentEmail}
-                                  onChange={(e) => setFormData({ ...formData, parentEmail: e.target.value })}
-                                  required
-                                />
-                             </div>
-                          </div>
-                       ) : (
-                          <div className="space-y-4">
-                             <div>
-                                <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Parent Full Name *</label>
-                                <input
-                                  className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
-                                  placeholder="Guardian name"
-                                  value={formData.parentName}
-                                  onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
-                                  required={!editingStudent}
-                                />
-                             </div>
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                   <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">IC / Passport Number</label>
-                                   <input
-                                     className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
-                                     placeholder="900101-01-XXXX"
-                                     value={formData.parentIcNumber}
-                                     onChange={(e) => setFormData({ ...formData, parentIcNumber: e.target.value })}
-                                   />
-                                </div>
-                                <div>
-                                   <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Phone Number</label>
-                                   <input
-                                     className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
-                                     placeholder="012-XXXXXXX"
-                                     value={formData.parentPhoneNumber}
-                                     onChange={(e) => setFormData({ ...formData, parentPhoneNumber: e.target.value })}
-                                   />
-                                </div>
-                             </div>
-                             
-                             {!editingStudent && (
-                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div>
-                                     <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Login Email *</label>
-                                     <input
-                                       type="email"
-                                       className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
-                                       placeholder="parent@example.com"
-                                       value={formData.parentEmail}
-                                       onChange={(e) => setFormData({ ...formData, parentEmail: e.target.value })}
-                                       required
-                                     />
-                                  </div>
-                                  <div>
-                                     <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Temporary Password *</label>
-                                     <input
-                                       type="password"
-                                       className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
-                                       placeholder="Set portal password"
-                                       value={formData.parentPassword}
-                                       onChange={(e) => setFormData({ ...formData, parentPassword: e.target.value })}
-                                       required
-                                     />
-                                  </div>
-                               </div>
-                             )}
-                          </div>
-                       )}
-
-                       <div>
-                          <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Home Address</label>
-                          <textarea
-                            className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium resize-none"
-                            rows={3}
-                            placeholder="Enter home address"
-                            value={formData.homeAddress}
-                            onChange={(e) => setFormData({ ...formData, homeAddress: e.target.value })}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-xs font-extrabold text-secondary-dark uppercase tracking-[0.2em] flex items-center gap-2">
+                        <div className="h-1 w-6 bg-secondary rounded-full"></div>
+                        Parent / Guardian Details
+                      </h4>
+                      {!editingStudent && (
+                        <div className="flex items-center gap-2 bg-brand-bg px-3 py-1.5 rounded-xl border border-gray-100">
+                          <span className="text-[10px] font-bold text-brand-textSecondary uppercase">Existing Parent?</span>
+                          <input
+                            type="checkbox"
+                            className="w-4 h-4 text-primary rounded focus:ring-primary cursor-pointer"
+                            checked={isExistingParent}
+                            onChange={() => setIsExistingParent(!isExistingParent)}
                           />
-                       </div>
+                        </div>
+                      )}
                     </div>
 
-                    {editingStudent && (
-                       <div className="pt-4 border-t border-gray-100">
-                          <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-2 ml-1">Enrollment Status</label>
-                          <div className="flex gap-4">
-                             {['active', 'graduated', 'withdrawn'].map(status => (
-                                <button
-                                  key={status}
-                                  type="button"
-                                  onClick={() => setFormData({ ...formData, status })}
-                                  className={`flex-1 py-3 px-4 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${
-                                     formData.status === status 
-                                     ? 'bg-primary text-white shadow-lg shadow-primary/20' 
-                                     : 'bg-brand-bg text-brand-textSecondary hover:bg-gray-200'
-                                  }`}
-                                >
-                                   {status}
-                                </button>
-                             ))}
+                    {isExistingParent ? (
+                      <div className="p-4 bg-secondary/5 rounded-2xl border border-secondary/10 space-y-4">
+                        <div>
+                          <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5">Registered Parent Email *</label>
+                          <input
+                            type="email"
+                            className="w-full px-4 py-3 bg-white border border-transparent rounded-2xl shadow-sm focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all font-medium"
+                            placeholder="Enter exact registered email"
+                            value={formData.parentEmail}
+                            onChange={(e) => setFormData({ ...formData, parentEmail: e.target.value })}
+                            required
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Parent Full Name *</label>
+                          <input
+                            className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
+                            placeholder="Guardian name"
+                            value={formData.parentName}
+                            onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
+                            required={!editingStudent}
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">IC / Passport Number</label>
+                            <input
+                              className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
+                              placeholder="90010101XXXX"
+                              value={formData.parentIcNumber}
+                              onChange={(e) => setFormData({ ...formData, parentIcNumber: e.target.value })}
+                            />
                           </div>
-                       </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Phone Number</label>
+                            <input
+                              className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
+                              placeholder="012XXXXXXX"
+                              value={formData.parentPhoneNumber}
+                              onChange={(e) => setFormData({ ...formData, parentPhoneNumber: e.target.value })}
+                            />
+                          </div>
+                        </div>
+
+                        {!editingStudent && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Login Email *</label>
+                              <input
+                                type="email"
+                                className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
+                                placeholder="parent@example.com"
+                                value={formData.parentEmail}
+                                onChange={(e) => setFormData({ ...formData, parentEmail: e.target.value })}
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Temporary Password *</label>
+                              <input
+                                type="password"
+                                className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
+                                placeholder="Set portal password"
+                                value={formData.parentPassword}
+                                onChange={(e) => setFormData({ ...formData, parentPassword: e.target.value })}
+                                required
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     )}
 
-                    <div className="flex gap-3 pt-6">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="flex-1 rounded-2xl font-bold text-brand-textSecondary hover:bg-brand-bg h-14"
-                        onClick={() => {
-                          setIsAddDialogOpen(false);
-                          setEditingStudent(null);
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button type="submit" className="flex-1 bg-primary hover:bg-primary-dark text-white rounded-2xl font-bold shadow-lg shadow-primary/20 h-14 text-lg">
-                        {editingStudent ? "Update Record" : "Enroll Student"}
-                      </Button>
+                    <div>
+                      <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-1.5 ml-1">Home Address</label>
+                      <textarea
+                        className="w-full px-4 py-3 bg-brand-bg border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium resize-none"
+                        rows={3}
+                        placeholder="Enter home address"
+                        value={formData.homeAddress}
+                        onChange={(e) => setFormData({ ...formData, homeAddress: e.target.value })}
+                      />
                     </div>
-                 </form>
+                  </div>
+
+                  {editingStudent && (
+                    <div className="pt-4 border-t border-gray-100">
+                      <label className="block text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mb-2 ml-1">Enrollment Status</label>
+                      <div className="flex gap-4">
+                        {['active', 'graduated', 'withdrawn'].map(status => (
+                          <button
+                            key={status}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, status })}
+                            className={`flex-1 py-3 px-4 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${formData.status === status
+                              ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                              : 'bg-brand-bg text-brand-textSecondary hover:bg-gray-200'
+                              }`}
+                          >
+                            {status}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 pt-6">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="flex-1 rounded-2xl font-bold text-brand-textSecondary hover:bg-brand-bg h-14"
+                      onClick={() => {
+                        setIsAddDialogOpen(false);
+                        setEditingStudent(null);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" className="flex-1 bg-primary hover:bg-primary-dark text-white rounded-2xl font-bold shadow-lg shadow-primary/20 h-14 text-lg">
+                      {editingStudent ? "Update Record" : "Enroll Student"}
+                    </Button>
+                  </div>
+                </form>
               </DialogContent>
             </Dialog>
           </div>
@@ -565,34 +631,40 @@ const StudentList = ({
         <div className="p-8 border-b border-gray-50">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div>
-               <h3 className="text-2xl font-bold text-brand-text font-poppins tracking-tight">Student Directory</h3>
-               <p className="text-sm font-medium text-brand-textSecondary mt-1">Found {filteredStudents.length} records</p>
+              <h3 className="text-2xl font-bold text-brand-text font-poppins tracking-tight">Student Directory</h3>
+              <p className="text-sm font-medium text-brand-textSecondary mt-1">Found {filteredStudents.length} records</p>
             </div>
 
             <div className="flex flex-wrap gap-4 items-center">
-              <select
-                className="bg-brand-bg px-5 py-2.5 rounded-2xl text-xs font-extrabold uppercase tracking-widest text-brand-textSecondary border border-transparent focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none pr-10 cursor-pointer shadow-sm"
-                value={filterAgeGroup}
-                onChange={(e) => setFilterAgeGroup(e.target.value)}
-              >
-                <option value="all">All Ages</option>
-                <option value="4">4 Years</option>
-                <option value="5">5 Years</option>
-                <option value="6">6 Years</option>
-              </select>
+              <div className="relative group">
+                <select
+                  className="bg-brand-bg pl-5 pr-10 py-2.5 rounded-2xl text-xs font-extrabold uppercase tracking-widest text-brand-textSecondary border border-transparent focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none cursor-pointer shadow-sm w-full"
+                  value={filterAgeGroup}
+                  onChange={(e) => setFilterAgeGroup(e.target.value)}
+                >
+                  <option value="all">All Ages</option>
+                  <option value="4">4 Years</option>
+                  <option value="5">5 Years</option>
+                  <option value="6">6 Years</option>
+                </select>
+                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-textSecondary group-focus-within:text-primary pointer-events-none transition-colors" />
+              </div>
 
-              <select
-                className="bg-brand-bg px-5 py-2.5 rounded-2xl text-xs font-extrabold uppercase tracking-widest text-brand-textSecondary border border-transparent focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none pr-10 cursor-pointer shadow-sm"
-                value={filterClass}
-                onChange={(e) => setFilterClass(e.target.value)}
-              >
-                <option value="all">All Classes</option>
-                {classes.map((c) => (
-                  <option key={c._id} value={c._id}>
-                    {c.name || c.className}
-                  </option>
-                ))}
-              </select>
+              <div className="relative group">
+                <select
+                  className="bg-brand-bg pl-5 pr-10 py-2.5 rounded-2xl text-xs font-extrabold uppercase tracking-widest text-brand-textSecondary border border-transparent focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none cursor-pointer shadow-sm w-full"
+                  value={filterClass}
+                  onChange={(e) => setFilterClass(e.target.value)}
+                >
+                  <option value="all">All Classes</option>
+                  {classes.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.name || c.className}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-textSecondary group-focus-within:text-primary pointer-events-none transition-colors" />
+              </div>
 
               <div className="relative group">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-textSecondary group-focus-within:text-primary transition-colors" />
@@ -603,6 +675,15 @@ const StudentList = ({
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
+
+              <button
+                onClick={handleExportExcel}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-5 rounded-2xl shadow-md hover:shadow-green-600/20 transition-all active:scale-95 text-xs uppercase tracking-widest cursor-pointer"
+                title="Export Student List to Excel/CSV"
+              >
+                <Download className="w-4 h-4" />
+                Export Excel
+              </button>
             </div>
           </div>
         </div>
@@ -617,14 +698,13 @@ const StudentList = ({
             <button
               key={tab.id}
               onClick={() => setStudentView(tab.id)}
-              className={`pb-4 text-xs font-extrabold tracking-widest uppercase transition-all relative flex items-center gap-2 ${
-                studentView === tab.id ? "text-primary" : "text-brand-textSecondary hover:text-brand-text"
-              }`}
+              className={`pb-4 text-xs font-extrabold tracking-widest uppercase transition-all relative flex items-center gap-2 ${studentView === tab.id ? "text-primary" : "text-brand-textSecondary hover:text-brand-text"
+                }`}
             >
               {tab.label}
               {tab.count > 0 && (
                 <span className="w-5 h-5 rounded-full bg-status-error text-white text-[10px] flex items-center justify-center shadow-lg shadow-status-error/20 animate-pulse">
-                   {tab.count}
+                  {tab.count}
                 </span>
               )}
               {studentView === tab.id && <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-primary rounded-t-full animate-in slide-in-from-bottom-1" />}
@@ -651,7 +731,7 @@ const StudentList = ({
                   <TableCell colSpan={6} className="h-64 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <div className="w-20 h-20 bg-brand-bg rounded-full flex items-center justify-center mb-4">
-                         <Search className="w-10 h-10 text-gray-300" />
+                        <Search className="w-10 h-10 text-gray-300" />
                       </div>
                       <p className="text-brand-textSecondary font-bold text-lg font-poppins">No students found</p>
                       <p className="text-brand-textSecondary/60 text-sm mt-1">Try adjusting your filters or search query.</p>
@@ -665,14 +745,9 @@ const StudentList = ({
                       {index + 1}
                     </TableCell>
                     <TableCell className="py-5">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-[1.25rem] bg-white shadow-soft border border-gray-100 text-primary flex items-center justify-center font-extrabold text-sm uppercase group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                          {student.name?.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-bold text-brand-text group-hover:text-primary transition-colors text-base leading-tight">{student.name}</p>
-                          <p className="text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mt-1">{student.gender} • {student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : 'N/A'}</p>
-                        </div>
+                      <div>
+                        <p className="font-bold text-brand-text group-hover:text-primary transition-colors text-base leading-tight">{student.name}</p>
+                        <p className="text-[10px] font-bold text-brand-textSecondary uppercase tracking-widest mt-1">{student.gender} • {student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : 'N/A'}</p>
                       </div>
                     </TableCell>
                     <TableCell className="py-5">
@@ -728,19 +803,6 @@ const StudentList = ({
                             >
                               <Edit className="w-5 h-5" />
                             </button>
-                            {userRole === 'admin' && (
-                              <button
-                                onClick={() => {
-                                  if (window.confirm("Are you sure you want to delete this student permanent record?")) {
-                                    onDelete(student._id || student.id);
-                                  }
-                                }}
-                                className="p-3 bg-status-error/10 text-status-error rounded-xl hover:bg-status-error hover:text-white transition-all shadow-sm"
-                                title="Delete Permanently"
-                              >
-                                <Plus className="w-5 h-5 rotate-45" />
-                              </button>
-                            )}
                           </>
                         )}
                       </div>

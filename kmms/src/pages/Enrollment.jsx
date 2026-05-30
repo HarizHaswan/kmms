@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { 
-  ArrowLeft, 
-  GraduationCap, 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Lock, 
+import {
+  ArrowLeft,
+  GraduationCap,
+  User,
+  Mail,
+  Phone,
+  Lock,
   Calendar,
   CheckCircle2,
   AlertCircle,
@@ -35,7 +34,6 @@ const Enrollment = () => {
     parentName: "",
     parentIcNumber: "",
     parentPhoneNumber: "",
-    homeAddress: "",
     parentEmail: "",
     parentPassword: "",
   });
@@ -146,15 +144,15 @@ const Enrollment = () => {
               <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary-dark font-bold">1</div>
               <h2 className="text-xl font-bold text-gray-900">Student Information</h2>
             </div>
-            
+
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700">Full Name *</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input 
-                    name="name" 
-                    placeholder="Enter student's full name" 
+                  <Input
+                    name="name"
+                    placeholder="Enter student's full name"
                     className="pl-10 h-12 rounded-xl"
                     value={formData.name}
                     onChange={handleChange}
@@ -167,9 +165,9 @@ const Enrollment = () => {
                 <label className="text-sm font-semibold text-gray-700">Date of Birth *</label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input 
-                    type="date" 
-                    name="dateOfBirth" 
+                  <Input
+                    type="date"
+                    name="dateOfBirth"
                     className="pl-10 h-12 rounded-xl"
                     value={formData.dateOfBirth}
                     onChange={handleChange}
@@ -180,8 +178,8 @@ const Enrollment = () => {
 
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700">Gender *</label>
-                <select 
-                  name="gender" 
+                <select
+                  name="gender"
                   className="w-full h-12 border rounded-xl px-4 bg-white focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                   value={formData.gender}
                   onChange={handleChange}
@@ -195,8 +193,8 @@ const Enrollment = () => {
 
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700">Preferred Class Group *</label>
-                <select 
-                  name="classId" 
+                <select
+                  name="classId"
                   className="w-full h-12 border rounded-xl px-4 bg-white focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                   value={formData.classId}
                   onChange={handleChange}
@@ -220,15 +218,15 @@ const Enrollment = () => {
               <div className="w-8 h-8 bg-accent/10 rounded-lg flex items-center justify-center text-accent-dark font-bold">2</div>
               <h2 className="text-xl font-bold text-gray-900">Parent / Guardian Details</h2>
             </div>
-            
+
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700">Parent Full Name *</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input 
-                    name="parentName" 
-                    placeholder="Enter parent's full name" 
+                  <Input
+                    name="parentName"
+                    placeholder="Enter parent's full name"
                     className="pl-10 h-12 rounded-xl"
                     value={formData.parentName}
                     onChange={handleChange}
@@ -241,9 +239,9 @@ const Enrollment = () => {
                 <label className="text-sm font-semibold text-gray-700">IC Number / ID *</label>
                 <div className="relative">
                   <ClipboardCheck className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input 
-                    name="parentIcNumber" 
-                    placeholder="e.g., 900101-01-1234" 
+                  <Input
+                    name="parentIcNumber"
+                    placeholder="e.g., 900101011234 (without the '-')"
                     className="pl-10 h-12 rounded-xl"
                     value={formData.parentIcNumber}
                     onChange={handleChange}
@@ -256,9 +254,9 @@ const Enrollment = () => {
                 <label className="text-sm font-semibold text-gray-700">Phone Number *</label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input 
-                    name="parentPhoneNumber" 
-                    placeholder="e.g., 012-3456789" 
+                  <Input
+                    name="parentPhoneNumber"
+                    placeholder="e.g., 0123456789"
                     className="pl-10 h-12 rounded-xl"
                     value={formData.parentPhoneNumber}
                     onChange={handleChange}
@@ -271,10 +269,10 @@ const Enrollment = () => {
                 <label className="text-sm font-semibold text-gray-700">Email Address *</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input 
-                    type="email" 
-                    name="parentEmail" 
-                    placeholder="parent@example.com" 
+                  <Input
+                    type="email"
+                    name="parentEmail"
+                    placeholder="parent@example.com"
                     className="pl-10 h-12 rounded-xl"
                     value={formData.parentEmail}
                     onChange={handleChange}
@@ -283,20 +281,6 @@ const Enrollment = () => {
                 </div>
               </div>
 
-              <div className="md:col-span-2 space-y-2">
-                <label className="text-sm font-semibold text-gray-700">Home Address *</label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-4 w-5 h-5 text-gray-400" />
-                  <textarea 
-                    name="homeAddress" 
-                    placeholder="Enter full home address" 
-                    className="w-full pl-10 pt-3 h-24 border rounded-xl outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm"
-                    value={formData.homeAddress}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-              </div>
             </div>
           </section>
 
@@ -304,9 +288,9 @@ const Enrollment = () => {
           <section className="space-y-6">
             <div className="flex items-center gap-3 border-b border-gray-100 pb-2">
               <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 font-bold">3</div>
-              <h2 className="text-xl font-bold text-gray-900">Account Security</h2>
+              <h2 className="text-xl font-bold text-gray-900">Set Login Password</h2>
             </div>
-            
+
             <div className="max-w-md space-y-4">
               <div className="flex items-start gap-3 bg-brand-bg p-4 rounded-2xl border border-gray-100">
                 <AlertCircle className="w-5 h-5 text-primary-dark shrink-0 mt-0.5" />
@@ -314,15 +298,15 @@ const Enrollment = () => {
                   You will use this password to login to the SmartKindy portal to track your child's progress and manage payments.
                 </p>
               </div>
-              
+
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700">Set Portal Password *</label>
+                <label className="text-sm font-semibold text-gray-700">Set Login Password *</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input 
-                    type="password" 
-                    name="parentPassword" 
-                    placeholder="Min. 6 characters" 
+                  <Input
+                    type="password"
+                    name="parentPassword"
+                    placeholder="Min. 6 characters"
                     className="pl-10 h-12 rounded-xl"
                     value={formData.parentPassword}
                     onChange={handleChange}
@@ -336,8 +320,8 @@ const Enrollment = () => {
 
           {/* Submit Button */}
           <div className="pt-8">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={submitting}
               className="w-full h-14 bg-accent hover:bg-accent-dark text-white text-lg font-bold rounded-2xl shadow-xl hover:shadow-accent/40 transition-all transform hover:-translate-y-1 disabled:opacity-70"
             >

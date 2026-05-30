@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Loader2, CheckCircle, XCircle, Clock, Search, Filter, Paperclip } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Clock, Search, Filter, Paperclip, Eye, EyeOff, FileText, ShieldAlert } from "lucide-react";
 import { getAllLeaves, updateLeaveStatus } from "../../api/leaves";
 import { getTeachers } from "../../api/teachers";
 
@@ -14,19 +14,14 @@ const LeaveManagement = () => {
   const [historyYear, setHistoryYear] = useState("all");
   const [historyMonth, setHistoryMonth] = useState("all");
   const [historyDay, setHistoryDay] = useState("all");
+  const [expandedLeaveId, setExpandedLeaveId] = useState(null); // ID of the request currently expanded
 
   useEffect(() => {
     fetchLeaves();
   }, []);
 
-  const getApprovalDeadline = (startDate) => {
-    const dt = new Date(startDate);
-    return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 7, 50, 0, 0);
-  };
-
-  const isApprovalWindowClosed = (leave) => {
-    if (leave.status !== "pending") return false;
-    return new Date() > getApprovalDeadline(leave.startDate);
+  const toggleExpandLeave = (id) => {
+    setExpandedLeaveId(expandedLeaveId === id ? null : id);
   };
 
   const getDateOnly = (dateInput) => {
@@ -69,12 +64,6 @@ const LeaveManagement = () => {
   };
 
   const handleDecision = async (id, action) => {
-    const targetLeave = leaves.find((leave) => leave._id === id);
-    if (action === "approve" && targetLeave && isApprovalWindowClosed(targetLeave)) {
-      alert("Approval deadline has passed. This request can no longer be approved.");
-      return;
-    }
-
     setUpdating(id);
     try {
       await updateLeaveStatus(id, action);
@@ -332,25 +321,24 @@ const LeaveManagement = () => {
       {/* Leave Request List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div>
-          <table className="w-full table-fixed text-left text-xs text-gray-600">
-            <thead className="bg-white text-gray-700 uppercase text-[11px] font-semibold">
+          <table className="w-full table-fixed text-left text-sm text-gray-600">
+            <thead className="bg-gray-50/50 text-gray-500 uppercase text-[10px] font-black tracking-widest border-b border-gray-100">
               <tr>
-                <th className="px-6 py-4 w-10">#</th>
-                <th className="px-6 py-4">Teacher</th>
-                <th className="px-6 py-4">Reason</th>
-                <th className="px-6 py-4">Duration</th>
-                <th className="px-6 py-4 text-center">Attachment</th>
-                <th className="px-6 py-4">Submitted</th>
-                <th className="px-6 py-4">Approval Deadline</th>
-                <th className="px-6 py-4 text-center">Teacher Attendance</th>
-                <th className="px-6 py-4 text-center">Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th className="px-6 py-5 w-16">#</th>
+                <th className="px-6 py-5">Teacher</th>
+                <th className="px-6 py-5">Reason</th>
+                <th className="px-6 py-5">Duration</th>
+                <th className="px-6 py-5 text-center">Attachment</th>
+                <th className="px-6 py-5">Submitted</th>
+                <th className="px-6 py-5 text-center">Teacher Attendance</th>
+                <th className="px-6 py-5 text-center">Status</th>
+                <th className="px-6 py-5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredLeaves.length === 0 ? (
                 <tr>
-                  <td colSpan="10" className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan="9" className="px-6 py-16 text-center text-gray-500 text-sm font-semibold">
                     {leaveView === "history"
                       ? "No leave history found."
                       : "No today/ongoing leave requests match your criteria."}
@@ -358,110 +346,213 @@ const LeaveManagement = () => {
                 </tr>
               ) : (
                 filteredLeaves.map((req, index) => {
-                  const approvalDeadline = getApprovalDeadline(req.startDate);
-                  const approvalClosed = isApprovalWindowClosed(req);
                   return (
-                  <tr key={req._id} className="hover:bg-white transition-colors">
-                    <td className="px-6 py-4 text-gray-400 font-bold text-sm select-none">{index + 1}.</td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="font-medium text-gray-900">{req.teacher?.name || "Unknown Teacher"}</span>
-                        <span className="text-xs text-gray-400">{req.teacher?.email}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 max-w-xs truncate" title={req.reason}>
-                      {req.reason}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="text-gray-900 font-medium">
-                          {new Date(req.startDate).toLocaleDateString()}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          to {new Date(req.endDate).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex justify-center">
-                        {req.attachment ? (
-                          <a
-                            href={`http://localhost:5000${req.attachment}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center gap-1 text-indigo-600 hover:text-indigo-800 text-[11px] font-semibold bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors"
-                          >
-                            <Paperclip className="w-3 h-3" /> View Document
-                          </a>
-                        ) : (
-                          <span className="text-gray-400 text-xs italic text-center">No attachment</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-500">
-                      {new Date(req.submittedAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="text-gray-900 text-xs font-medium">
-                          {approvalDeadline.toLocaleDateString()} 7:50 AM
-                        </span>
-                        {req.status === "pending" && (
-                          <span className={`text-xs ${approvalClosed ? "text-red-600" : "text-yellow-600"}`}>
-                            {approvalClosed ? "Expired" : "Pending window"}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex justify-center">
-                        {req.status === "approved" ? (
-                          <span className="inline-flex items-center justify-center text-xs font-semibold text-red-700 bg-red-50 px-2.5 py-1 rounded-md text-center">
-                            On leave / Absent
-                          </span>
-                        ) : (
-                          <span className="text-xs text-gray-500 text-center">
-                            Present (until approved)
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex justify-center">
-                        {getStatusBadge(req.status)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {req.status === "pending" && (
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => handleDecision(req._id, "approve")}
-                            disabled={updating === req._id || approvalClosed}
-                            className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 disabled:opacity-50 transition-colors"
-                            title={approvalClosed ? "Approval deadline passed" : "Approve"}
-                          >
-                            {updating === req._id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
+                    <React.Fragment key={req._id}>
+                      <tr className="hover:bg-indigo-50/30 transition-colors">
+                        <td className="px-6 py-5 text-gray-400 font-bold text-xs select-none">{index + 1}.</td>
+                        <td className="px-6 py-5">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-gray-900 leading-tight text-sm md:text-base">{req.teacher?.name || "Unknown Teacher"}</span>
+                            <span className="text-[10px] text-gray-400 font-medium mt-0.5">{req.teacher?.email}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 text-xs font-semibold text-gray-700 max-w-xs truncate" title={req.reason}>
+                          {req.reason}
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex flex-col">
+                            <span className="text-gray-900 font-bold text-xs md:text-sm">
+                              {new Date(req.startDate).toLocaleDateString()}
+                            </span>
+                            <span className="text-[10px] text-gray-400 font-medium mt-0.5">
+                              to {new Date(req.endDate || req.startDate).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex justify-center">
+                            {req.attachment ? (
+                              <a
+                                href={`http://localhost:5000${req.attachment}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center justify-center gap-1 text-indigo-600 hover:text-indigo-800 text-[11px] font-semibold bg-indigo-50 hover:bg-indigo-100 px-3.5 py-2 rounded-xl transition-colors"
+                              >
+                                <Paperclip className="w-3.5 h-3.5" /> View Document
+                              </a>
                             ) : (
-                              <CheckCircle className="w-4 h-4" />
+                              <span className="text-gray-400 text-xs italic text-center">No attachment</span>
                             )}
-                          </button>
-                          <button
-                            onClick={() => handleDecision(req._id, "reject")}
-                            disabled={updating === req._id}
-                            className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50 transition-colors"
-                            title="Reject"
-                          >
-                            {updating === req._id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 text-gray-500 text-xs font-semibold">
+                          {new Date(req.submittedAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex justify-center">
+                            {req.status === "approved" ? (
+                              <span className="inline-flex items-center justify-center text-xs font-semibold text-red-700 bg-red-50 px-2.5 py-1 rounded-md text-center">
+                                On leave / Absent
+                              </span>
                             ) : (
-                              <XCircle className="w-4 h-4" />
+                              <span className="text-xs text-gray-500 text-center">
+                                Present (until approved)
+                              </span>
                             )}
-                          </button>
-                        </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex justify-center">
+                            {getStatusBadge(req.status)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 text-right">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => toggleExpandLeave(req._id)}
+                              className={`p-2 rounded-xl transition-all ${
+                                expandedLeaveId === req._id
+                                  ? "bg-indigo-100 text-indigo-700"
+                                  : "hover:bg-indigo-50 hover:text-indigo-600 text-gray-400"
+                              }`}
+                              title={expandedLeaveId === req._id ? "Hide Details" : "View All Details"}
+                            >
+                              {expandedLeaveId === req._id ? (
+                                <EyeOff className="w-4 h-4" />
+                              ) : (
+                                <Eye className="w-4 h-4" />
+                              )}
+                            </button>
+                            {req.status === "pending" && (
+                              <>
+                                <button
+                                  onClick={() => handleDecision(req._id, "approve")}
+                                  disabled={updating === req._id}
+                                  className="p-2 rounded-xl bg-green-50 text-green-600 hover:bg-green-100 disabled:opacity-50 transition-colors"
+                                  title="Approve"
+                                >
+                                  {updating === req._id ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <CheckCircle className="w-4 h-4" />
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => handleDecision(req._id, "reject")}
+                                  disabled={updating === req._id}
+                                  className="p-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50 transition-colors"
+                                  title="Reject"
+                                >
+                                  {updating === req._id ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <XCircle className="w-4 h-4" />
+                                  )}
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                      {expandedLeaveId === req._id && (
+                        <tr className="bg-gray-50/50 border-b border-gray-100/80 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <td colSpan="9" className="px-8 py-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
+                              {/* Left Box: Full Leave details */}
+                              <div className="space-y-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-indigo-50/20 to-primary-light/5 rounded-bl-full pointer-events-none" />
+                                <h4 className="font-black text-[10px] uppercase tracking-widest text-indigo-600 border-b border-gray-50 pb-2 flex items-center gap-2">
+                                  <FileText className="w-3.5 h-3.5" /> Leave Request Details
+                                </h4>
+                                <div className="space-y-3">
+                                  <div>
+                                    <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5 font-bold">Leave Reason</span>
+                                    <p className="text-gray-800 font-semibold text-xs leading-relaxed whitespace-pre-wrap bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                      {req.reason || "No reason provided."}
+                                    </p>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs font-semibold">
+                                    <div>
+                                      <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5 font-bold">Teacher</span>
+                                      <span className="text-gray-800 font-bold">{req.teacher?.name || "Unknown"}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5 font-bold">Email</span>
+                                      <span className="text-gray-800 font-bold">{req.teacher?.email || "—"}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5 font-bold">Leave Duration</span>
+                                      <span className="text-gray-800 font-bold text-indigo-600">
+                                        {new Date(req.startDate).toLocaleDateString()} to {new Date(req.endDate || req.startDate).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5 font-bold">Submitted At</span>
+                                      <span className="text-gray-800 font-bold">
+                                        {new Date(req.submittedAt).toLocaleDateString()} {new Date(req.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* Right Box: Admin Review & Document */}
+                              <div className="space-y-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                                <div className="space-y-4">
+                                  <h4 className="font-black text-[10px] uppercase tracking-widest text-indigo-600 border-b border-gray-50 pb-2 flex items-center gap-2">
+                                    <ShieldAlert className="w-3.5 h-3.5" /> Administrative Status
+                                  </h4>
+                                  <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs font-semibold">
+                                    <div>
+                                      <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5 font-bold">Status</span>
+                                      <div className="mt-1">{getStatusBadge(req.status)}</div>
+                                    </div>
+                                    <div>
+                                      <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5 font-bold">Attendance Impact</span>
+                                      <span className="text-gray-800 font-bold mt-1 block">
+                                        {req.status === "approved" ? "On leave / Absent" : "Present (until approved)"}
+                                      </span>
+                                    </div>
+                                    {req.reviewedAt && (
+                                      <>
+                                        <div>
+                                          <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5 font-bold">Reviewed By</span>
+                                          <span className="text-gray-800 font-bold">Administrator</span>
+                                        </div>
+                                        <div>
+                                          <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5 font-bold">Reviewed At</span>
+                                          <span className="text-gray-800 font-bold">
+                                            {new Date(req.reviewedAt).toLocaleDateString()} {new Date(req.reviewedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                          </span>
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                <div className="pt-4 border-t border-gray-50 flex items-center justify-between">
+                                  <div>
+                                    <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5 font-bold">Supporting Document</span>
+                                    {req.attachment ? (
+                                      <a
+                                        href={`http://localhost:5000${req.attachment}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 px-3.5 py-2 rounded-xl transition-colors mt-1"
+                                      >
+                                        <Paperclip className="w-3.5 h-3.5" /> View MC / Document
+                                      </a>
+                                    ) : (
+                                      <span className="text-gray-400 text-xs italic block mt-1">No document attached</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
                       )}
-                    </td>
-                  </tr>
+                    </React.Fragment>
                   );
                 })
               )}

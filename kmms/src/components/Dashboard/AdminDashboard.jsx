@@ -232,16 +232,11 @@ export default function AdminDashboard({ setActiveTab }) {
             <div className="space-y-4">
               {pendingEnrollments.slice(0, 4).map(student => (
                 <div key={student._id} className="p-5 border border-gray-50 rounded-3xl bg-brand-bg/30 flex items-center justify-between group hover:bg-white hover:shadow-premium hover:border-transparent transition-all duration-300">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center font-bold text-primary uppercase">
-                       {student.name?.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="font-bold text-brand-text group-hover:text-primary transition-colors">{student.name}</p>
-                      <p className="text-xs font-bold text-brand-textSecondary uppercase tracking-wider mt-0.5">
-                        {student.classId?.className || 'Awaiting Placement'}
-                      </p>
-                    </div>
+                  <div>
+                    <p className="font-bold text-brand-text group-hover:text-primary transition-colors">{student.name}</p>
+                    <p className="text-xs font-bold text-brand-textSecondary uppercase tracking-wider mt-0.5">
+                      {student.classId?.className || 'Awaiting Placement'}
+                    </p>
                   </div>
                   <Button 
                     variant="outline" 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Save, Calendar, Loader2 } from "lucide-react";
+import { Plus, Calendar, Loader2 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
@@ -83,6 +83,57 @@ export default function AdminTimetable() {
     e.preventDefault();
     if (!formData.subject || !formData.startTime || !formData.endTime || !selectedClassId) return;
 
+    // A. Client-Side Pre-Validations
+    
+    // 1. Start Time earlier than End Time
+    if (formData.startTime >= formData.endTime) {
+      const errorMsg = "Start time must be earlier than end time.";
+      if (toast) {
+        toast({
+          title: "Validation Error",
+          description: errorMsg,
+          variant: "destructive",
+        });
+      }
+      alert(`Failed to add slot. ${errorMsg}`);
+      return;
+    }
+
+    // 2. Overlap with Snack Time (09:30 - 09:50)
+    const snackStart = "09:30";
+    const snackEnd = "09:50";
+    if (formData.startTime < snackEnd && formData.endTime > snackStart) {
+      const errorMsg = `The time range ${formData.startTime} - ${formData.endTime} overlaps with the fixed Snack Time (09:30 - 09:50).`;
+      if (toast) {
+        toast({
+          title: "Scheduling Conflict",
+          description: errorMsg,
+          variant: "destructive",
+        });
+      }
+      alert(`Failed to add slot. ${errorMsg}`);
+      return;
+    }
+
+    // 3. Overlap with another subject in the same class on the same day
+    const classConflict = timetableData.find(slot => 
+      slot.day === formData.day &&
+      formData.startTime < slot.endTime &&
+      formData.endTime > slot.startTime
+    );
+    if (classConflict) {
+      const errorMsg = `This time range overlaps with another session in this class (${classConflict.subject}: ${classConflict.startTime} - ${classConflict.endTime}).`;
+      if (toast) {
+        toast({
+          title: "Scheduling Conflict",
+          description: errorMsg,
+          variant: "destructive",
+        });
+      }
+      alert(`Failed to add slot. ${errorMsg}`);
+      return;
+    }
+
     try {
       // Find the teacher object to send the ID if needed, 
       // OR just send the name if your backend expects a name string.
@@ -118,7 +169,15 @@ export default function AdminTimetable() {
 
     } catch (err) {
       console.error("Failed to add slot", err);
-      alert("Error adding slot. Please check console.");
+      const errMsg = err.response?.data?.message || err.message || "Error adding slot. Please check console.";
+      if (toast) {
+        toast({
+          title: "Failed to Add Slot",
+          description: errMsg,
+          variant: "destructive",
+        });
+      }
+      alert(errMsg);
     }
   };
 

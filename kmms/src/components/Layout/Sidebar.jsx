@@ -32,11 +32,11 @@ const Sidebar = ({
 
   const adminTabs = [
     { id: "users", label: "Student List", icon: Users },
-    { id: "teachers", label: "Teacher Staff", icon: GraduationCap },
+    { id: "teachers", label: "Teacher Management", icon: GraduationCap },
     { id: "attendance", label: "Attendance", icon: CheckCircle },
     { id: "timetables", label: "Timetables", icon: Calendar },
     { id: "leave", label: "Leave Requests", icon: FileText },
-    { id: "salary", label: "Staff Salary", icon: Banknote },
+    { id: "salary", label: "Salary Profiles", icon: Banknote },
     { id: "payments", label: "Fee Management", icon: DollarSign },
     { id: "announcements", label: "Announcements", icon: Bell },
     { id: "messages", label: "Messages", icon: MessageCircle },
@@ -94,7 +94,7 @@ const Sidebar = ({
       <div className="flex items-center justify-between mb-10 px-2">
         <div className="flex items-center gap-2">
           <div className="p-2 bg-primary/10 rounded-xl">
-             <LayoutDashboard className="w-6 h-6 text-primary" />
+            <LayoutDashboard className="w-6 h-6 text-primary" />
           </div>
           <h2 className="text-xl font-bold text-brand-text font-poppins tracking-tight">SmartKindy</h2>
         </div>
@@ -109,10 +109,10 @@ const Sidebar = ({
       {/* Navigation Items */}
       <nav className="space-y-2 flex-1 overflow-y-auto pr-2 scrollbar-hide">
         {navItems.map((item) => (
-          <NavButton 
-            key={item.id} 
-            {...item} 
-            isActive={item.id === activeTab} 
+          <NavButton
+            key={item.id}
+            {...item}
+            isActive={item.id === activeTab}
           />
         ))}
       </nav>

@@ -52,24 +52,7 @@ exports.reviewSickLeave = async (req, res) => {
     return res.status(400).json({ message: 'This leave request has already been reviewed.' });
   }
 
-  if (action === 'approve') {
-    const leaveStartDate = toLocalDateOnly(sl.startDate);
-    const approvalDeadline = new Date(
-      leaveStartDate.getFullYear(),
-      leaveStartDate.getMonth(),
-      leaveStartDate.getDate(),
-      7,
-      50,
-      0,
-      0
-    );
 
-    if (new Date() > approvalDeadline) {
-      return res.status(400).json({
-        message: 'Approval deadline has passed. Teacher leave must be approved before 7:50 AM on the leave start date.'
-      });
-    }
-  }
 
   sl.status = action === 'approve' ? 'approved' : 'rejected';
   sl.reviewedBy = adminId;

@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { Loader2, Lock, User, Mail, Phone, Shield } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Loader2, Lock, User, Mail, Phone, Shield, MapPin } from "lucide-react";
 import { updatePassword } from "../../api/auth"; // Ensure this import exists (see step 2)
+import { getStudents, updateParentAddress } from "../../api/students";
 
 export default function Settings({ user }) {
   const [passwords, setPasswords] = useState({
@@ -9,6 +10,41 @@ export default function Settings({ user }) {
     confirmPassword: "",
   });
   const [loading, setLoading] = useState(false);
+  const [address, setAddress] = useState("");
+  const [addressLoading, setAddressLoading] = useState(false);
+  const [fetchingAddress, setFetchingAddress] = useState(false);
+
+  useEffect(() => {
+    if (user.role === "parent") {
+      const fetchParentAddress = async () => {
+        try {
+          setFetchingAddress(true);
+          const children = await getStudents();
+          if (children && children.length > 0) {
+            setAddress(children[0].homeAddress || "");
+          }
+        } catch (err) {
+          console.error("Failed to fetch child address:", err);
+        } finally {
+          setFetchingAddress(false);
+        }
+      };
+      fetchParentAddress();
+    }
+  }, [user]);
+
+  const handleAddressUpdate = async () => {
+    try {
+      setAddressLoading(true);
+      await updateParentAddress(address);
+      alert("Home address updated successfully!");
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Failed to update home address.");
+    } finally {
+      setAddressLoading(false);
+    }
+  };
 
   const handlePasswordChange = (e) => {
     setPasswords({ ...passwords, [e.target.name]: e.target.value });
@@ -95,6 +131,53 @@ export default function Settings({ user }) {
           </div>
         </div>
       </div>
+
+      {/* 1.5. HOME ADDRESS INFO (ONLY FOR PARENTS, EDITABLE) */}
+      {user.role === "parent" && (
+        <div className="bg-white p-6 rounded-xl shadow border border-gray-100 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-accent/5 to-primary/5 rounded-bl-full pointer-events-none" />
+          
+          <h3 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2 relative z-10">
+            <MapPin className="w-5 h-5 text-accent" /> Home Address Information
+          </h3>
+          <p className="text-sm text-gray-500 mb-6">
+            View and update your children's registered residential address.
+          </p>
+
+          {fetchingAddress ? (
+            <div className="flex items-center gap-2 text-gray-500 py-4">
+              <Loader2 className="w-5 h-5 animate-spin animate-infinite" />
+              <span>Retrieving address details...</span>
+            </div>
+          ) : (
+            <div className="space-y-4 relative z-10">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Residential Address</label>
+                <div className="relative">
+                  <textarea
+                    rows={3}
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Enter your complete home address (e.g., house number, street, city, state, postal code)"
+                    className="w-full p-4 border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all text-sm resize-none shadow-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  onClick={handleAddressUpdate}
+                  disabled={addressLoading}
+                  className="px-6 py-2.5 bg-accent hover:bg-accent-dark text-white rounded-lg font-medium flex items-center gap-2 shadow-md hover:shadow-accent/20 transition-all active:scale-[0.98] disabled:opacity-50"
+                >
+                  {addressLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Save Home Address
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 2. CHANGE PASSWORD (FUNCTIONAL) */}
       <div className="bg-white p-6 rounded-xl shadow border border-gray-100">

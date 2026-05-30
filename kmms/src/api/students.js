@@ -40,3 +40,9 @@ export const rejectStudent = async (id) => {
   const res = await api.put(`/students/${id}/reject`);
   return res.data;
 };
+
+export const updateParentAddress = async (homeAddress) => {
+  const res = await api.put("/students/parent/address", { homeAddress });
+  return res.data;
+};
+
