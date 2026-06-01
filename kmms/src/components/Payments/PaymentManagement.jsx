@@ -200,6 +200,49 @@ const PaymentManagement = ({ userId, role, user }) => {
   const [parentPayForm, setParentPayForm] = useState(DEFAULT_PARENT_PAY_FORM);
   const [feeForm, setFeeForm] = useState(DEFAULT_FEE_FORM);
   const [formSubmitting, setFormSubmitting] = useState(false);
+  const [selectedParentInvoiceIds, setSelectedParentInvoiceIds] = useState({});
+
+  // Initialize checked parent invoices oldest-first
+  useEffect(() => {
+    if (isParentRole && invoices.length > 0) {
+      setSelectedParentInvoiceIds((prev) => {
+        const next = { ...prev };
+        invoices.forEach((inv) => {
+          if (inv.status !== "paid") {
+            const hasPending = payments.some(
+              (p) => getIdValue(p.invoiceId) === String(inv._id) && p.status === "pending_verification"
+            );
+            if (!hasPending) {
+              const sid = getIdValue(inv.studentId);
+              if (!(sid in prev)) {
+                if (!next[sid]) next[sid] = [];
+                if (!next[sid].includes(String(inv._id))) {
+                  next[sid].push(String(inv._id));
+                }
+              }
+            }
+          }
+        });
+        return next;
+      });
+    }
+  }, [invoices, payments, isParentRole]);
+
+  const handleToggleParentInvoice = (studentId, invoiceId) => {
+    setSelectedParentInvoiceIds((prev) => {
+      const currentList = prev[studentId] || [];
+      let newList;
+      if (currentList.includes(invoiceId)) {
+        newList = currentList.filter((id) => id !== invoiceId);
+      } else {
+        newList = [...currentList, invoiceId];
+      }
+      return {
+        ...prev,
+        [studentId]: newList,
+      };
+    });
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -1575,6 +1618,13 @@ const PaymentManagement = ({ userId, role, user }) => {
                 {studentIds.map((sid) => {
                   const { outstanding, paid, pendingVerification } = byStudent[sid];
                   const studentName = getStudentName(sid);
+                  const selectedInvsForStudent = selectedParentInvoiceIds[sid] || [];
+                  const selectedOutstanding = outstanding.filter(inv =>
+                    selectedInvsForStudent.includes(String(inv._id))
+                  );
+                  const totalSelectedAmount = selectedOutstanding.reduce(
+                    (sum, inv) => sum + getInvoiceBalance(inv), 0
+                  );
                   const totalOutstanding = outstanding.reduce(
                     (sum, inv) => sum + getInvoiceBalance(inv), 0
                   );
@@ -1592,8 +1642,11 @@ const PaymentManagement = ({ userId, role, user }) => {
                               <p className="text-xs font-bold text-amber-700 uppercase tracking-wide mb-1">
                                 Outstanding Statement
                               </p>
-                              <p className="text-2xl font-extrabold text-gray-900">
-                                RM {formatMoney(totalOutstanding)}
+                              <p className="text-2xl font-extrabold text-gray-900 flex flex-wrap items-baseline gap-1.5">
+                                RM {formatMoney(totalSelectedAmount)}
+                                <span className="text-xs font-semibold text-amber-700 normal-case">
+                                  ({selectedOutstanding.length} selected of RM {formatMoney(totalOutstanding)})
+                                </span>
                               </p>
                               {earliestDue && (
                                 <p className="text-xs text-amber-600 mt-1">
@@ -1608,54 +1661,62 @@ const PaymentManagement = ({ userId, role, user }) => {
                             </span>
                           </div>
 
-                          <div className="divide-y divide-amber-200 rounded-xl border border-amber-200 bg-white overflow-hidden">
-                            {outstanding.map((inv, index) => (
-                              <div key={inv._id} className="flex items-center justify-between px-4 py-3 text-sm">
-                                <div className="flex items-center gap-3">
-                                  <span className="text-xs font-bold text-amber-400 w-4">
-                                    {index + 1}.
-                                  </span>
-                                  <div>
-                                    <p className="font-semibold text-gray-800">
-                                      {inv.feeItem || inv.category || "Fee"}
+                          <div className="divide-y divide-amber-200 rounded-xl border border-amber-200 bg-white overflow-hidden shadow-sm">
+                            {outstanding.map((inv, index) => {
+                              const isChecked = selectedInvsForStudent.includes(String(inv._id));
+                              return (
+                                <div key={inv._id} className={`flex items-center justify-between px-4 py-3 text-sm transition-colors ${isChecked ? "bg-amber-50/10" : "bg-gray-50/20"}`}>
+                                  <div className="flex items-center gap-3">
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={() => handleToggleParentInvoice(sid, String(inv._id))}
+                                      className="w-4 h-4 rounded border-amber-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer transition"
+                                    />
+                                    <div>
+                                      <p className="font-semibold text-gray-800">
+                                        {inv.feeItem || inv.category || "Fee"}
+                                      </p>
+                                      <p className="text-xs text-gray-500 mt-0.5">
+                                        {inv.category || "Uncategorized"} &middot;{" "}
+                                        {inv.dueDate
+                                          ? `Due ${new Date(inv.dueDate).toLocaleDateString()}`
+                                          : "No due date"}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="font-bold text-gray-900">
+                                      RM {formatMoney(inv.amount)}
                                     </p>
-                                    <p className="text-xs text-gray-500 mt-0.5">
-                                      {inv.category || "Uncategorized"} &middot;{" "}
-                                      {inv.dueDate
-                                        ? `Due ${new Date(inv.dueDate).toLocaleDateString()}`
-                                        : "No due date"}
-                                    </p>
+                                    {inv.status === "partial" && (
+                                      <p className="text-xs text-amber-600">
+                                        Balance: RM {formatMoney(getInvoiceBalance(inv))}
+                                      </p>
+                                    )}
                                   </div>
                                 </div>
-                                <div className="text-right">
-                                  <p className="font-bold text-gray-900">
-                                    RM {formatMoney(inv.amount)}
-                                  </p>
-                                  {inv.status === "partial" && (
-                                    <p className="text-xs text-amber-600">
-                                      Balance: RM {formatMoney(getInvoiceBalance(inv))}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
 
                           <div className="flex gap-2 pt-1">
                             <button
                               type="button"
+                              disabled={selectedOutstanding.length === 0}
                               onClick={() => {
-                                setConsolidatedPreviewInvoices(outstanding);
+                                setConsolidatedPreviewInvoices(selectedOutstanding);
                                 setShowConsolidatedPreview(true);
                               }}
-                              className="flex-1 inline-flex items-center justify-center gap-1.5 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 px-4 py-2.5 rounded-xl hover:bg-blue-100 transition"
+                              className="flex-1 inline-flex items-center justify-center gap-1.5 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 px-4 py-2.5 rounded-xl hover:bg-blue-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               <FileText className="w-4 h-4" /> View Invoice
                             </button>
                             <button
                               type="button"
-                              onClick={() => openParentPayModal(outstanding)}
-                              className="flex-1 inline-flex items-center justify-center gap-1.5 text-sm font-medium text-white bg-green-600 px-4 py-2.5 rounded-xl hover:bg-green-700 transition"
+                              disabled={selectedOutstanding.length === 0}
+                              onClick={() => openParentPayModal(selectedOutstanding)}
+                              className="flex-1 inline-flex items-center justify-center gap-1.5 text-sm font-medium text-white bg-green-600 px-4 py-2.5 rounded-xl hover:bg-green-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               Pay Now
                             </button>

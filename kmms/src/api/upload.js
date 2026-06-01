@@ -10,3 +10,14 @@ export const uploadProfileImage = async (file) => {
 
   return res.data;
 };
+
+export const uploadAttachment = async (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await api.post("/upload/attachment", formData, {
+    headers: { "Content-Type": "multipart/form-data" }
+  });
+
+  return res.data;
+};

@@ -49,13 +49,14 @@ router.get("/", protect, async (req, res) => {
 
 // ADMIN & TEACHER: Create announcement
 router.post("/", protect, authorize("admin", "teacher"), async (req, res) => {
-  const { title, message, targetRole, targetClass } = req.body;
+  const { title, message, targetRole, targetClass, attachment } = req.body;
 
   const newA = await Announcement.create({
     title,
     message,
     targetRole: targetRole || "all",
     targetClass: targetClass || "",
+    attachment: attachment || "",
     createdBy: req.user._id, // This is coming from req.user
   });
 

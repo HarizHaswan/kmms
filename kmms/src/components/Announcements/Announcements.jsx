@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Bell, Trash2, PlusCircle } from "lucide-react";
+import { Bell, Trash2, PlusCircle, Image, X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 import {
@@ -7,6 +7,19 @@ import {
   addAnnouncement,
   deleteAnnouncement,
 } from "../../api/announcements";
+import { uploadAttachment } from "../../api/upload";
+
+const getAttachmentUrl = (url) => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  let base = process.env.REACT_APP_API_URL || "http://localhost:5000";
+  if (base.endsWith("/api")) {
+    base = base.substring(0, base.length - 4);
+  }
+  return `${base}${url.startsWith("/") ? "" : "/"}${url}`;
+};
 
 export default function Announcements() {
   const [announcements, setAnnouncements] = useState([]);
@@ -19,6 +32,31 @@ export default function Announcements() {
     message: "",
     targetRole: "all",
   });
+  const [attachmentFile, setAttachmentFile] = useState(null);
+  const [attachmentPreview, setAttachmentPreview] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file.");
+      return;
+    }
+
+    setAttachmentFile(file);
+    const previewUrl = URL.createObjectURL(file);
+    setAttachmentPreview(previewUrl);
+  };
+
+  const handleClearImage = () => {
+    setAttachmentFile(null);
+    if (attachmentPreview) {
+      URL.revokeObjectURL(attachmentPreview);
+      setAttachmentPreview("");
+    }
+  };
 
   // Search + Filters + Pagination
   const [search, setSearch] = useState("");
@@ -44,19 +82,6 @@ export default function Announcements() {
       console.error("Failed to load announcements:", err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      await addAnnouncement(form);
-      setShowForm(false);
-      setForm({ title: "", message: "", targetRole: "all" });
-      loadAnnouncements();
-    } catch (err) {
-      console.error("Failed to add announcement:", err);
     }
   };
 
@@ -148,18 +173,27 @@ export default function Announcements() {
             className="space-y-4"
             onSubmit={async (e) => {
               e.preventDefault();
+              setUploadingImage(true);
               const payload = { ...form };
               if (role === "teacher") {
                 payload.targetRole = "parent";
                 payload.targetClass = currentUser?.classAssigned || "";
               }
               try {
+                if (attachmentFile) {
+                  const uploadResult = await uploadAttachment(attachmentFile);
+                  payload.attachment = uploadResult.url;
+                }
                 await addAnnouncement(payload);
                 setShowForm(false);
                 setForm({ title: "", message: "", targetRole: "all" });
+                handleClearImage();
                 loadAnnouncements();
               } catch (err) {
                 console.error("Failed to add announcement:", err);
+                alert("Failed to post announcement. Please try again.");
+              } finally {
+                setUploadingImage(false);
               }
             }}
           >
@@ -180,6 +214,57 @@ export default function Announcements() {
               onChange={(e) => setForm({ ...form, message: e.target.value })}
               required
             />
+
+            {/* Image Attachment Input */}
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">
+                Attach Picture
+              </label>
+              
+              {!attachmentPreview ? (
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:bg-gray-50/50 hover:border-purple-300 transition group">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <Image className="w-8 h-8 text-gray-400 group-hover:text-purple-500 mb-2 transition-colors" />
+                    <p className="text-sm text-gray-500 font-semibold">
+                      Click to upload a picture
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      PNG, JPG, JPEG up to 10MB
+                    </p>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+                </label>
+              ) : (
+                <div className="relative rounded-2xl border border-gray-150 overflow-hidden bg-gray-50/50 p-2 max-w-sm flex items-center gap-3">
+                  <img
+                    src={attachmentPreview}
+                    alt="Preview"
+                    className="w-16 h-16 object-cover rounded-xl border border-gray-200"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 truncate">
+                      {attachmentFile?.name || "Image file"}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {(attachmentFile?.size ? (attachmentFile.size / 1024 / 1024).toFixed(2) : 0)} MB
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleClearImage}
+                    className="p-1.5 rounded-full hover:bg-red-50 text-red-500 hover:text-red-600 transition shrink-0 mr-1"
+                    title="Remove image"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
 
             {role === "admin" ? (
               <select
@@ -203,7 +288,10 @@ export default function Announcements() {
             <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => setShowForm(false)}
+                onClick={() => {
+                  setShowForm(false);
+                  handleClearImage();
+                }}
                 className="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors"
               >
                 Cancel
@@ -211,9 +299,10 @@ export default function Announcements() {
 
               <button
                 type="submit"
-                className="px-5 py-2.5 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors shadow-sm"
+                disabled={uploadingImage}
+                className="px-5 py-2.5 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                Post Announcement
+                {uploadingImage ? "Uploading..." : "Post Announcement"}
               </button>
             </div>
           </form>
@@ -268,6 +357,17 @@ export default function Announcements() {
                     {a.message}
                   </ReactMarkdown>
                 </div>
+
+                {a.attachment && (
+                  <div className="mt-3 mb-4 overflow-hidden rounded-2xl border border-gray-150 max-w-md shadow-sm bg-gray-50/20 group cursor-pointer relative">
+                    <img
+                      src={getAttachmentUrl(a.attachment)}
+                      alt="Announcement Attachment"
+                      className="w-full h-auto object-cover max-h-[300px] hover:scale-[1.02] transition-transform duration-300"
+                      onClick={() => window.open(getAttachmentUrl(a.attachment), "_blank")}
+                    />
+                  </div>
+                )}
 
                 <p className="text-xs text-gray-400 font-medium">
                   {new Date(a.createdAt).toLocaleDateString()} • {a.createdBy?.name || "Admin"}
