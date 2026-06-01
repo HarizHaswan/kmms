@@ -284,8 +284,8 @@ const StudentList = ({
           </p>
         </div>
 
-        {userRole === "admin" && (
-          <div className="flex gap-4">
+        <div className="flex gap-4">
+          {userRole === "admin" && (
             <Dialog open={isAddClassDialogOpen} onOpenChange={setIsAddClassDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="flex items-center gap-2 bg-secondary hover:bg-secondary-dark text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-secondary/20 transition-all active:scale-95">
@@ -353,14 +353,17 @@ const StudentList = ({
                 </form>
               </DialogContent>
             </Dialog>
+          )}
 
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            {userRole === "admin" && (
               <DialogTrigger asChild>
                 <Button className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-primary/20 transition-all active:scale-95">
                   <Plus className="w-5 h-5" />
                   Add Student
                 </Button>
               </DialogTrigger>
+            )}
 
               <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] border-none shadow-premium p-0 scrollbar-hide">
                 <div className="bg-gradient-to-r from-primary to-primary-dark p-8 text-white sticky top-0 z-10">
@@ -580,7 +583,6 @@ const StudentList = ({
               </DialogContent>
             </Dialog>
           </div>
-        )}
       </div>
 
       {/* STATS CARDS */}

@@ -82,6 +82,9 @@ const Dashboard = ({ user, onLogout }) => {
       if (activeTab === "timetables")
         return <AdminTimetable />;
 
+      if (activeTab === "progress")
+        return <ProgressReports role="Admin" user={user} />;
+
       // ✅ ADMIN SEES ADMIN ATTENDANCE (All Classes)
       if (activeTab === "attendance")
         return <AdminAttendance />;

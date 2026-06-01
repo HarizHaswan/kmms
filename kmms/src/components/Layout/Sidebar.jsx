@@ -35,6 +35,7 @@ const Sidebar = ({
     { id: "teachers", label: "Teacher Management", icon: GraduationCap },
     { id: "attendance", label: "Attendance", icon: CheckCircle },
     { id: "timetables", label: "Timetables", icon: Calendar },
+    { id: "progress", label: "Child Progress", icon: BookOpen },
     { id: "leave", label: "Leave Requests", icon: FileText },
     { id: "salary", label: "Salary Profiles", icon: Banknote },
     { id: "payments", label: "Fee Management", icon: DollarSign },

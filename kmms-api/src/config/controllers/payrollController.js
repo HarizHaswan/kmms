@@ -236,6 +236,7 @@ exports.getMyPayslips = async (req, res, next) => {
       teacher: req.user._id,
       status: { $in: ["Pending", "Paid"] } // Don't show drafts to teachers
     })
+    .populate("teacher", "name email profileImage salaryProfile")
     .sort({ year: -1, month: -1 });
 
     res.json(records);
