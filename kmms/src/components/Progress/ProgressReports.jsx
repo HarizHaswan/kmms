@@ -215,21 +215,21 @@ const ProgressReports = ({ role, user }) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+          <div className="bg-white p-5 rounded-xl border-2 border-gray-300 shadow-sm">
             <p className="text-sm font-medium text-gray-500">Active Students</p>
             <p className="text-2xl font-bold text-gray-900 mt-2">{activeStudents.length}</p>
           </div>
-          <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+          <div className="bg-white p-5 rounded-xl border-2 border-gray-300 shadow-sm">
             <p className="text-sm font-medium text-gray-500">Reports Written</p>
             <p className="text-2xl font-bold text-gray-900 mt-2">{reports.length}</p>
           </div>
-          <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+          <div className="bg-white p-5 rounded-xl border-2 border-gray-300 shadow-sm">
             <p className="text-sm font-medium text-gray-500">Latest Update</p>
             <p className="text-lg font-bold text-gray-900 mt-2">{latestReportDate}</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
+        <div className="bg-white rounded-2xl shadow-sm border-2 border-gray-300 p-5 space-y-5">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h3 className="text-lg font-bold text-gray-900">Latest Reports by Student</h3>
@@ -269,7 +269,7 @@ const ProgressReports = ({ role, user }) => {
                 .map(({ student, latestReport, reportCount }) => (
                   <div
                     key={student._id}
-                    className="flex flex-col md:flex-row gap-4 p-5 rounded-2xl border border-gray-100 bg-white shadow-sm items-start"
+                    className="flex flex-col md:flex-row gap-4 p-5 rounded-2xl border-2 border-gray-300 bg-white shadow-sm items-start"
                   >
                     <div className="flex-1 space-y-3 w-full">
                       <div className="flex items-start justify-between gap-3">
@@ -325,7 +325,7 @@ const ProgressReports = ({ role, user }) => {
           )}
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
+        <div className="bg-white rounded-2xl shadow-sm border-2 border-gray-300 p-5 space-y-4">
           <div>
             <h3 className="text-lg font-bold text-gray-900">Report History</h3>
             <p className="text-sm text-gray-500 mt-1">
@@ -466,21 +466,21 @@ const ProgressReports = ({ role, user }) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+          <div className="bg-white p-5 rounded-xl border-2 border-gray-300 shadow-sm">
             <p className="text-sm font-medium text-gray-500">Children Linked</p>
             <p className="text-2xl font-bold text-gray-900 mt-2">{students.length}</p>
           </div>
-          <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+          <div className="bg-white p-5 rounded-xl border-2 border-gray-300 shadow-sm">
             <p className="text-sm font-medium text-gray-500">Reports Available</p>
             <p className="text-2xl font-bold text-gray-900 mt-2">{reports.length}</p>
           </div>
-          <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+          <div className="bg-white p-5 rounded-xl border-2 border-gray-300 shadow-sm">
             <p className="text-sm font-medium text-gray-500">Latest Report</p>
             <p className="text-lg font-bold text-gray-900 mt-2">{latestReportDate}</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
+        <div className="bg-white rounded-2xl shadow-sm border-2 border-gray-300 p-5 space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h3 className="text-lg font-bold text-gray-900">Child Reports</h3>
@@ -514,7 +514,7 @@ const ProgressReports = ({ role, user }) => {
               {filteredReports.map((report) => (
                 <div
                   key={report._id}
-                  className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5 space-y-4"
+                  className="rounded-2xl border-2 border-gray-300 bg-white shadow-sm p-5 space-y-4"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -562,21 +562,21 @@ const ProgressReports = ({ role, user }) => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between">
+          <div className="bg-white p-5 rounded-2xl border-2 border-gray-300 shadow-sm flex flex-col justify-between">
             <div>
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Students</p>
               <p className="text-3xl font-bold text-gray-900 mt-2">{activeStudents.length}</p>
             </div>
             <p className="text-xs text-gray-400 mt-4 font-medium">Active enrolled students</p>
           </div>
-          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between">
+          <div className="bg-white p-5 rounded-2xl border-2 border-gray-300 shadow-sm flex flex-col justify-between">
             <div>
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Reports Logged</p>
               <p className="text-3xl font-bold text-gray-900 mt-2">{reports.length}</p>
             </div>
             <p className="text-xs text-gray-400 mt-4 font-medium">Total reports submitted by staff</p>
           </div>
-          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between">
+          <div className="bg-white p-5 rounded-2xl border-2 border-gray-300 shadow-sm flex flex-col justify-between">
             <div>
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Latest Update</p>
               <p className="text-lg font-bold text-gray-900 mt-2.5">{latestReportDate}</p>
@@ -586,7 +586,7 @@ const ProgressReports = ({ role, user }) => {
         </div>
 
         {/* Filter Section */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
+        <div className="bg-white rounded-2xl border-2 border-gray-300 shadow-sm p-6 space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-5">
             <div>
               <h3 className="text-lg font-bold text-gray-900">Student Progress Feed</h3>
@@ -644,7 +644,7 @@ const ProgressReports = ({ role, user }) => {
               {filteredReports.map((report) => (
                 <div
                   key={report._id}
-                  className="bg-white rounded-2xl border border-gray-100 hover:border-accent/20 hover:shadow-md transition-all duration-300 p-6 flex flex-col justify-between"
+                  className="bg-white rounded-2xl border-2 border-gray-300 hover:border-accent/20 hover:shadow-md transition-all duration-300 p-6 flex flex-col justify-between"
                 >
                   <div className="space-y-4">
                     <div className="flex items-start justify-between gap-3">

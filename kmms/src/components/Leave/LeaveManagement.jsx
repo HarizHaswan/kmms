@@ -148,7 +148,7 @@ const LeaveManagement = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+        <div className="bg-white p-5 rounded-xl border-2 border-gray-300 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-500">Pending Requests</p>
             <p className="text-2xl font-bold text-yellow-600 mt-1">{stats.pending}</p>
@@ -158,7 +158,7 @@ const LeaveManagement = () => {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+        <div className="bg-white p-5 rounded-xl border-2 border-gray-300 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-500">Approved Leaves</p>
             <p className="text-2xl font-bold text-green-600 mt-1">{stats.approved}</p>
@@ -168,7 +168,7 @@ const LeaveManagement = () => {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+        <div className="bg-white p-5 rounded-xl border-2 border-gray-300 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-500">Rejected Requests</p>
             <p className="text-2xl font-bold text-red-600 mt-1">{stats.rejected}</p>
@@ -178,7 +178,7 @@ const LeaveManagement = () => {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+        <div className="bg-white p-5 rounded-xl border-2 border-gray-300 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-500">Teacher Attendance (Today)</p>
             <p className="text-2xl font-bold text-indigo-600 mt-1">
@@ -192,7 +192,7 @@ const LeaveManagement = () => {
       </div>
 
       {/* Filters & Search */}
-      <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+      <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-xl border-2 border-gray-300 shadow-sm">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -319,7 +319,7 @@ const LeaveManagement = () => {
       )}
 
       {/* Leave Request List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border-2 border-gray-300 overflow-hidden">
         <div>
           <table className="w-full table-fixed text-left text-sm text-gray-600">
             <thead className="bg-gray-50/50 text-gray-500 uppercase text-[10px] font-black tracking-widest border-b border-gray-100">
@@ -459,7 +459,7 @@ const LeaveManagement = () => {
                           <td colSpan="9" className="px-8 py-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
                               {/* Left Box: Full Leave details */}
-                              <div className="space-y-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
+                              <div className="space-y-4 bg-white p-6 rounded-2xl border-2 border-gray-300 shadow-sm relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-indigo-50/20 to-primary-light/5 rounded-bl-full pointer-events-none" />
                                 <h4 className="font-black text-[10px] uppercase tracking-widest text-indigo-600 border-b border-gray-50 pb-2 flex items-center gap-2">
                                   <FileText className="w-3.5 h-3.5" /> Leave Request Details
@@ -497,7 +497,7 @@ const LeaveManagement = () => {
                               </div>
                               
                               {/* Right Box: Admin Review & Document */}
-                              <div className="space-y-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                              <div className="space-y-4 bg-white p-6 rounded-2xl border-2 border-gray-300 shadow-sm relative overflow-hidden flex flex-col justify-between">
                                 <div className="space-y-4">
                                   <h4 className="font-black text-[10px] uppercase tracking-widest text-indigo-600 border-b border-gray-50 pb-2 flex items-center gap-2">
                                     <ShieldAlert className="w-3.5 h-3.5" /> Administrative Status

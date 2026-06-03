@@ -243,12 +243,12 @@ const ParentActivities = ({ user }) => {
           placeholder="Search activities or notes..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 transition text-sm"
+          className="w-full pl-11 pr-4 py-3 border-2 border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 transition text-sm"
         />
       </div>
 
       {/* ── Filter tabs ─────────────────────────────────────────────────────── */}
-      <div className="flex gap-2 p-1 bg-gray-100 rounded-xl">
+      <div className="flex gap-2 p-1 bg-gray-100 rounded-xl border-2 border-gray-300">
         {[
           {
             id: "today",
@@ -300,7 +300,7 @@ const ParentActivities = ({ user }) => {
 
       {/* ── Activity groups ──────────────────────────────────────────────────── */}
       {grouped.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div className="flex flex-col items-center justify-center py-20 gap-4 bg-white rounded-2xl border-2 border-gray-300 shadow-sm">
           <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center">
             <Camera className="w-8 h-8 text-gray-300" />
           </div>
@@ -330,7 +330,7 @@ const ParentActivities = ({ user }) => {
             return (
               <div
                 key={dateKey}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+                className="bg-white rounded-2xl border-2 border-gray-300 shadow-sm overflow-hidden"
               >
                 {/* Date header (collapsible) */}
                 <button

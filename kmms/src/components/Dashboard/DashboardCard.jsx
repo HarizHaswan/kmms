@@ -4,7 +4,7 @@ const DashboardCard = ({ title, value, icon: Icon, color, onClick }) => {
   return (
     <div
       onClick={onClick}
-      className="bg-white p-6 rounded-[2rem] shadow-soft border border-gray-100/50 hover:shadow-premium transition-all duration-300 cursor-pointer group active:scale-[0.98] relative overflow-hidden"
+      className="bg-white p-6 rounded-[2rem] shadow-soft border-2 border-gray-300 hover:shadow-premium transition-all duration-300 cursor-pointer group active:scale-[0.98] relative overflow-hidden"
     >
       <div className="flex items-start justify-between relative z-10">
         <div>

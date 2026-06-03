@@ -156,7 +156,7 @@ const LeaveRequest = ({ teacherId }) => {
         </div>
       </div>
 
-      <div className={`rounded-2xl border px-5 py-4 flex items-center justify-between ${approvedLeaveToday ? "bg-red-50 border-red-100" : "bg-green-50 border-green-100"}`}>
+      <div className={`rounded-2xl border-2 px-5 py-4 flex items-center justify-between ${approvedLeaveToday ? "bg-red-50 border-red-300" : "bg-green-50 border-green-300"}`}>
         <div>
           <p className="text-sm font-semibold text-gray-800">Today&apos;s Teacher Attendance Status</p>
           <p className={`text-sm mt-1 ${approvedLeaveToday ? "text-red-700" : "text-green-700"}`}>
@@ -173,7 +173,7 @@ const LeaveRequest = ({ teacherId }) => {
       <div className="space-y-8">
         {/* Top Section: Form */}
         <div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border-2 border-gray-300">
             <div className="flex items-center gap-2 mb-6 text-indigo-600">
               <FileText className="w-5 h-5" />
               <h3 className="font-bold text-lg">New Application</h3>
@@ -279,7 +279,7 @@ const LeaveRequest = ({ teacherId }) => {
           </h3>
 
           {leaves.length === 0 ? (
-            <div className="bg-white rounded-2xl p-12 text-center border border-dashed border-gray-300">
+            <div className="bg-white rounded-2xl p-12 text-center border-2 border-dashed border-gray-300">
               <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FileText className="w-8 h-8 text-gray-400" />
               </div>
@@ -287,7 +287,7 @@ const LeaveRequest = ({ teacherId }) => {
               <p className="text-gray-500 text-sm mt-1">Your leave history will appear here once you submit a request.</p>
             </div>
           ) : (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-sm border-2 border-gray-300 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm text-gray-600">
                   <thead className="bg-white text-gray-700 uppercase text-xs font-semibold">

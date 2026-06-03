@@ -100,7 +100,7 @@ export default function AdminAttendance() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-inter">
       <LiveDateTime />
       {/* Top Section */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -119,7 +119,7 @@ export default function AdminAttendance() {
       </div>
 
       {/* Admin Tabs Grouped by Year */}
-      <div className="bg-white p-5 rounded-lg border shadow-sm flex flex-col gap-5">
+      <div className="bg-white p-5 rounded-lg border-2 border-gray-300 shadow-sm flex flex-col gap-5">
         {classes.length > 0 ? (
           [4, 5, 6, "Other"].map((age) => {
             // Group by yearGroup if it exists, otherwise extract from className leading number
@@ -146,7 +146,7 @@ export default function AdminAttendance() {
                         : "bg-white text-gray-600 hover:bg-brand-bg border border-gray-100 shadow-sm"
                         }`}
                     >
-                      {cls.className}
+                      Class {cls.className || cls.name}
                     </button>
                   ))}
                 </div>

@@ -243,7 +243,7 @@ const ActivitiesTracking = ({ user }) => {
       )}
 
       {/* Record Activity Form */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div className="bg-white p-6 rounded-2xl shadow-sm border-2 border-gray-300">
         <h3 className="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2">
           <Send className="w-5 h-5 text-indigo-500" />
           Record New Activity
@@ -396,7 +396,7 @@ const ActivitiesTracking = ({ user }) => {
       </div>
 
       {/* Recent Activities */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div className="bg-white p-6 rounded-2xl shadow-sm border-2 border-gray-300">
         <h3 className="text-lg font-bold text-gray-800 mb-5 flex items-center justify-between">
           <span className="flex items-center gap-2">
             <Clock className="w-5 h-5 text-indigo-500" />

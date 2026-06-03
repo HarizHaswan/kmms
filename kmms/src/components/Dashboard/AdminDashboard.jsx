@@ -140,7 +140,7 @@ export default function AdminDashboard({ setActiveTab }) {
   const StatCard = ({ title, value, icon: Icon, color, onClick, trend }) => (
     <div 
       onClick={onClick}
-      className="bg-white p-6 rounded-[2rem] shadow-soft border border-gray-100/50 hover:shadow-premium transition-all duration-300 cursor-pointer group relative overflow-hidden"
+      className="bg-white p-6 rounded-[2rem] shadow-soft border-2 border-gray-300 hover:shadow-premium transition-all duration-300 cursor-pointer group relative overflow-hidden"
     >
       <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${color} opacity-[0.03] rounded-bl-[4rem] group-hover:scale-110 transition-transform duration-500`} />
       
@@ -208,7 +208,7 @@ export default function AdminDashboard({ setActiveTab }) {
       {/* BOTTOM PANELS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         {/* PENDING ENROLLMENTS */}
-        <div className="bg-white rounded-[2.5rem] shadow-soft border border-gray-100/50 p-8">
+        <div className="bg-white rounded-[2.5rem] shadow-soft border-2 border-gray-300 p-8">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
                <div className="p-3 bg-primary/10 rounded-2xl">
@@ -252,7 +252,7 @@ export default function AdminDashboard({ setActiveTab }) {
         </div>
 
         {/* PENDING LEAVE */}
-        <div className="bg-white rounded-[2.5rem] shadow-soft border border-gray-100/50 p-8">
+        <div className="bg-white rounded-[2.5rem] shadow-soft border-2 border-gray-300 p-8">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
                <div className="p-3 bg-accent/10 rounded-2xl">

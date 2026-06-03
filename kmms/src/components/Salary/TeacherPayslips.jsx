@@ -56,7 +56,7 @@ const TeacherPayslips = () => {
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center relative">
+      <div className="bg-white p-4 rounded-2xl border-2 border-gray-300 shadow-sm flex items-center relative">
         <Search className="absolute left-7 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           type="text"
@@ -78,7 +78,7 @@ const TeacherPayslips = () => {
           </div>
         ) : (
           filteredSalaries.map((salary) => (
-            <div key={salary._id} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-xl hover:border-indigo-100 transition-all group">
+            <div key={salary._id} className="bg-white rounded-3xl shadow-sm border-2 border-gray-300 overflow-hidden flex flex-col hover:shadow-xl hover:border-indigo-400 transition-all group">
               <div className="p-6 border-b border-gray-50 flex justify-between items-start">
                 <div>
                   <h3 className="font-black text-gray-900 text-lg uppercase tracking-tight">

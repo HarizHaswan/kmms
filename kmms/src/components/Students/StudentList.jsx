@@ -587,7 +587,7 @@ const StudentList = ({
 
       {/* STATS CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        <div className="bg-white p-6 rounded-[2rem] shadow-soft border border-gray-100/50 flex items-center justify-between group hover:shadow-premium transition-all duration-300">
+        <div className="bg-white p-6 rounded-[2rem] shadow-soft border-2 border-gray-300 flex items-center justify-between group hover:shadow-premium transition-all duration-300">
           <div>
             <p className="text-brand-textSecondary text-xs font-bold uppercase tracking-widest mb-1">Total Students</p>
             <h3 className="text-3xl font-extrabold text-brand-text font-poppins">{stats.total}</h3>
@@ -597,7 +597,7 @@ const StudentList = ({
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-[2rem] shadow-soft border border-gray-100/50 flex items-center justify-between group hover:shadow-premium transition-all duration-300">
+        <div className="bg-white p-6 rounded-[2rem] shadow-soft border-2 border-gray-300 flex items-center justify-between group hover:shadow-premium transition-all duration-300">
           <div>
             <p className="text-brand-textSecondary text-xs font-bold uppercase tracking-widest mb-1">4 Years Old</p>
             <h3 className="text-3xl font-extrabold text-accent-dark font-poppins">{stats.age4}</h3>
@@ -607,7 +607,7 @@ const StudentList = ({
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-[2rem] shadow-soft border border-gray-100/50 flex items-center justify-between group hover:shadow-premium transition-all duration-300">
+        <div className="bg-white p-6 rounded-[2rem] shadow-soft border-2 border-gray-300 flex items-center justify-between group hover:shadow-premium transition-all duration-300">
           <div>
             <p className="text-brand-textSecondary text-xs font-bold uppercase tracking-widest mb-1">5 Years Old</p>
             <h3 className="text-3xl font-extrabold text-secondary-dark font-poppins">{stats.age5}</h3>
@@ -617,7 +617,7 @@ const StudentList = ({
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-[2rem] shadow-soft border border-gray-100/50 flex items-center justify-between group hover:shadow-premium transition-all duration-300">
+        <div className="bg-white p-6 rounded-[2rem] shadow-soft border-2 border-gray-300 flex items-center justify-between group hover:shadow-premium transition-all duration-300">
           <div>
             <p className="text-brand-textSecondary text-xs font-bold uppercase tracking-widest mb-1">6 Years Old</p>
             <h3 className="text-3xl font-extrabold text-primary-dark font-poppins">{stats.age6}</h3>
@@ -629,7 +629,7 @@ const StudentList = ({
       </div>
 
       {/* DIRECTORY SECTION */}
-      <div className="bg-white rounded-[2.5rem] shadow-soft border border-gray-100/50 overflow-hidden">
+      <div className="bg-white rounded-[2.5rem] shadow-soft border-2 border-gray-300 overflow-hidden">
         <div className="p-8 border-b border-gray-50">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div>

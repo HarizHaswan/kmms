@@ -93,7 +93,7 @@ export default function Settings({ user }) {
       </div>
 
       {/* 1. READ-ONLY PROFILE INFO */}
-      <div className="bg-white p-6 rounded-xl shadow border border-gray-100">
+      <div className="bg-white p-6 rounded-xl shadow border-2 border-gray-300">
         <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
           <User className="w-5 h-5 text-accent" /> Profile Information
         </h3>
@@ -134,7 +134,7 @@ export default function Settings({ user }) {
 
       {/* 1.5. HOME ADDRESS INFO (ONLY FOR PARENTS, EDITABLE) */}
       {user.role === "parent" && (
-        <div className="bg-white p-6 rounded-xl shadow border border-gray-100 relative overflow-hidden group">
+        <div className="bg-white p-6 rounded-xl shadow border-2 border-gray-300 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-accent/5 to-primary/5 rounded-bl-full pointer-events-none" />
           
           <h3 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2 relative z-10">
@@ -180,7 +180,7 @@ export default function Settings({ user }) {
       )}
 
       {/* 2. CHANGE PASSWORD (FUNCTIONAL) */}
-      <div className="bg-white p-6 rounded-xl shadow border border-gray-100">
+      <div className="bg-white p-6 rounded-xl shadow border-2 border-gray-300">
         <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
           <Lock className="w-5 h-5 text-purple-600" /> Security
         </h3>

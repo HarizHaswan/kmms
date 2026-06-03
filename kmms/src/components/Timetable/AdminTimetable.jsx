@@ -200,13 +200,13 @@ export default function AdminTimetable() {
   if (loading) return <div className="p-6">Loading data...</div>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-inter">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Timetable Management</h2>
       </div>
 
       {/* --- CLASS TABS --- */}
-      <div className="bg-white p-5 rounded-lg border shadow-sm flex flex-col gap-5">
+      <div className="bg-white p-5 rounded-lg border-2 border-gray-300 shadow-sm flex flex-col gap-5">
         {classes.length > 0 ? (
           [4, 5, 6, "Other"].map((age) => {
             // Group by yearGroup if it exists, otherwise extract from className leading number

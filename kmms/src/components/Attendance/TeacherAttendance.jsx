@@ -114,7 +114,7 @@ export default function TeacherAttendance({ user }) {
   if (!myClass) return <div className="p-10 text-center">Loading your class info...</div>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-inter">
       <LiveDateTime />
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <h2 className="text-2xl font-bold text-gray-900">

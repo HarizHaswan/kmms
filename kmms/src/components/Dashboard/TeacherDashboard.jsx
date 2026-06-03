@@ -73,7 +73,7 @@ const TeacherDashboard = ({ setActiveTab, user }) => {
   const StatBox = ({ title, value, icon: Icon, color, onClick }) => (
     <div 
       onClick={onClick}
-      className="bg-white p-6 rounded-[2rem] shadow-soft border border-gray-100/50 hover:shadow-premium transition-all duration-300 cursor-pointer group active:scale-[0.98]"
+      className="bg-white p-6 rounded-[2rem] shadow-soft border-2 border-gray-300 hover:shadow-premium transition-all duration-300 cursor-pointer group active:scale-[0.98]"
     >
       <div className="flex items-center justify-between">
         <div className={`p-4 rounded-2xl ${color} text-white shadow-lg shadow-inherit/20 group-hover:rotate-6 transition-transform duration-300`}>
@@ -127,7 +127,7 @@ const TeacherDashboard = ({ setActiveTab, user }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* TIMETABLE PANEL */}
-        <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] shadow-soft border border-gray-100/50">
+        <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] shadow-soft border-2 border-gray-300">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-primary/10 rounded-2xl">

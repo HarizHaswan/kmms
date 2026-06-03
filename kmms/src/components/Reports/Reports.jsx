@@ -204,8 +204,8 @@ const Reports = () => {
     selectedLedgerClassId === "all"
       ? students
       : students.filter(
-          (student) => getIdValue(student.classId) === selectedLedgerClassId
-        )
+        (student) => getIdValue(student.classId) === selectedLedgerClassId
+      )
   ).map((student) => getIdValue(student));
 
   const ledgerScopedInvoices = invoices.filter((invoice) =>
@@ -252,9 +252,9 @@ const Reports = () => {
   const collectionRate =
     totalIssuedThisMonth > 0
       ? Math.min(
-          100,
-          Math.round((collectedAgainstMonthlyInvoices / totalIssuedThisMonth) * 100)
-        )
+        100,
+        Math.round((collectedAgainstMonthlyInvoices / totalIssuedThisMonth) * 100)
+      )
       : 0;
 
   const invoiceStatusSummary = ledgerScopedInvoices.reduce(
@@ -326,24 +326,22 @@ const Reports = () => {
           </p>
         </div>
 
-        <div className="bg-white p-1 rounded-lg border shadow-sm flex">
+        <div className="bg-white p-1 rounded-lg border-2 border-gray-300 shadow-sm flex">
           <button
             onClick={() => setActiveReport("attendance")}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-              activeReport === "attendance"
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeReport === "attendance"
                 ? "bg-accent-light text-accent-dark shadow-sm"
                 : "text-gray-600 hover:bg-gray-50"
-            }`}
+              }`}
           >
             Attendance Report
           </button>
           <button
             onClick={() => setActiveReport("ledger")}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-              activeReport === "ledger"
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeReport === "ledger"
                 ? "bg-green-100 text-green-700 shadow-sm"
                 : "text-gray-600 hover:bg-gray-50"
-            }`}
+              }`}
           >
             Payment & Ledger Report
           </button>
@@ -358,7 +356,7 @@ const Reports = () => {
         <>
           {activeReport === "attendance" && (
             <div className="animate-in fade-in slide-in-from-left-4 duration-500 space-y-6">
-              <div className="bg-white p-4 rounded-xl border shadow-sm flex flex-col md:flex-row gap-6 items-start md:items-center">
+              <div className="bg-white p-4 rounded-xl border-2 border-gray-300 shadow-sm flex flex-col md:flex-row gap-6 items-start md:items-center">
                 <div className="flex flex-col gap-1.5 w-full md:w-auto">
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide ml-1">
                     Select Class
@@ -560,7 +558,7 @@ const Reports = () => {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-20 text-gray-500 bg-white rounded-lg border border-dashed">
+                <div className="text-center py-20 text-gray-500 bg-white rounded-lg border-2 border-gray-300">
                   <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-20" />
                   <p>No attendance data found for this class and month.</p>
                 </div>
@@ -570,7 +568,7 @@ const Reports = () => {
 
           {activeReport === "ledger" && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-6">
-              <div className="bg-white p-4 rounded-xl border shadow-sm flex flex-col xl:flex-row gap-4 items-start xl:items-center">
+              <div className="bg-white p-4 rounded-xl border-2 border-gray-300 shadow-sm flex flex-col xl:flex-row gap-4 items-start xl:items-center">
                 <div className="flex flex-col gap-1.5 w-full xl:w-auto">
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide ml-1">
                     Filter by Class

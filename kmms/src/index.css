@@ -16,7 +16,7 @@
 
 @layer components {
   .card-premium {
-    @apply bg-white rounded-3xl shadow-soft border border-gray-100/50 transition-all hover:shadow-premium;
+    @apply bg-white rounded-3xl shadow-soft border-2 border-gray-300 transition-all hover:shadow-premium;
   }
 
   .btn-primary {

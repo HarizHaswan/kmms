@@ -119,7 +119,7 @@ export default function Messages({ user }) {
   }
 
   return (
-    <div className="flex h-[calc(100vh-140px)] bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+    <div className="flex h-[calc(100vh-140px)] bg-white rounded-2xl shadow-sm border-2 border-gray-300 overflow-hidden">
       {/* LEFT SIDEBAR: USER LIST */}
       <div className="w-1/3 border-r border-gray-200 bg-gray-50 flex flex-col">
         <div className="p-4 border-b border-gray-200 bg-white">

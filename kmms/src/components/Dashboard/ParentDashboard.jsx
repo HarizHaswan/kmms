@@ -110,7 +110,7 @@ const ParentDashboard = ({ setActiveTab, user }) => {
   const SummaryCard = ({ title, value, icon: Icon, color, onClick, statusText }) => (
     <div 
       onClick={onClick}
-      className="bg-white p-6 rounded-[2rem] shadow-soft border border-gray-100/50 hover:shadow-premium transition-all duration-300 cursor-pointer group active:scale-[0.98]"
+      className="bg-white p-6 rounded-[2rem] shadow-soft border-2 border-gray-300 hover:shadow-premium transition-all duration-300 cursor-pointer group active:scale-[0.98]"
     >
       <div className="flex items-start justify-between">
         <div className={`p-4 rounded-2xl ${color} text-white shadow-lg shadow-inherit/20 group-hover:scale-110 transition-transform duration-300`}>
@@ -167,7 +167,7 @@ const ParentDashboard = ({ setActiveTab, user }) => {
       )}
 
       {/* CHILD PROFILE CARD */}
-      <div className="bg-white rounded-[2.5rem] shadow-soft border border-gray-100/50 p-8 relative overflow-hidden group">
+      <div className="bg-white rounded-[2.5rem] shadow-soft border-2 border-gray-300 p-8 relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-bl-full group-hover:scale-110 transition-transform duration-700" />
         
         <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
@@ -253,7 +253,7 @@ const ParentDashboard = ({ setActiveTab, user }) => {
       </div>
 
       {/* RECENT ACTIVITIES PANEL */}
-      <div className="bg-white p-8 rounded-[2.5rem] shadow-soft border border-gray-100/50">
+      <div className="bg-white p-8 rounded-[2.5rem] shadow-soft border-2 border-gray-300">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-secondary/10 rounded-2xl">

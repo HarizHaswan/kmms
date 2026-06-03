@@ -379,7 +379,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
       </div>
 
       {/* Table */}
-      <Card className="rounded-3xl border-none shadow-sm overflow-hidden">
+      <Card className="rounded-3xl border-2 border-gray-300 shadow-sm overflow-hidden">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
@@ -487,7 +487,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                         <TableCell colSpan={7} className="px-8 py-6">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
                             {/* Left Column: Personal & Employment */}
-                            <div className="space-y-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
+                            <div className="space-y-4 bg-white p-6 rounded-2xl border-2 border-gray-300 shadow-sm relative overflow-hidden">
                               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-50/20 to-primary-light/5 rounded-bl-full pointer-events-none" />
                               <h4 className="font-black text-[10px] uppercase tracking-widest text-emerald-600 border-b border-gray-50 pb-2 flex items-center gap-2">
                                 <User className="w-3.5 h-3.5" /> Profile & Personal Details
@@ -529,7 +529,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                             </div>
 
                             {/* Right Column: Payroll & Statutory */}
-                            <div className="space-y-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
+                            <div className="space-y-4 bg-white p-6 rounded-2xl border-2 border-gray-300 shadow-sm relative overflow-hidden">
                               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-50/20 to-primary-light/5 rounded-bl-full pointer-events-none" />
                               <h4 className="font-black text-[10px] uppercase tracking-widest text-emerald-600 border-b border-gray-50 pb-2 flex items-center gap-2">
                                 <DollarSign className="w-3.5 h-3.5" /> Salary & Banking Details

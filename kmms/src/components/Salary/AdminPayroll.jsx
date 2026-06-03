@@ -212,7 +212,7 @@ const AdminPayroll = () => {
         <>
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm group hover:border-indigo-200 transition-all">
+            <div className="bg-white p-5 rounded-2xl border-2 border-gray-300 shadow-sm group hover:border-indigo-400 transition-all">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Net Payable</p>
@@ -223,7 +223,7 @@ const AdminPayroll = () => {
                 </div>
               </div>
             </div>
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm group hover:border-emerald-200 transition-all">
+            <div className="bg-white p-5 rounded-2xl border-2 border-gray-300 shadow-sm group hover:border-emerald-400 transition-all">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Paid</p>
@@ -234,7 +234,7 @@ const AdminPayroll = () => {
                 </div>
               </div>
             </div>
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm group hover:border-amber-200 transition-all">
+            <div className="bg-white p-5 rounded-2xl border-2 border-gray-300 shadow-sm group hover:border-amber-400 transition-all">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Pending</p>
@@ -245,7 +245,7 @@ const AdminPayroll = () => {
                 </div>
               </div>
             </div>
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm group hover:border-indigo-200 transition-all">
+            <div className="bg-white p-5 rounded-2xl border-2 border-gray-300 shadow-sm group hover:border-indigo-400 transition-all">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active Staff</p>
@@ -301,7 +301,7 @@ const AdminPayroll = () => {
           </div>
 
           {/* Payroll Table */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border-2 border-gray-300 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
@@ -652,7 +652,7 @@ const AdminPayroll = () => {
       ) : (
         /* SALARY PROFILES TAB */
         <div className="space-y-4">
-          <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center relative">
+          <div className="bg-white p-4 rounded-2xl border-2 border-gray-300 shadow-sm flex items-center relative">
             <Search className="absolute left-7 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
               type="text"
@@ -663,7 +663,7 @@ const AdminPayroll = () => {
             />
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border-2 border-gray-300 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>

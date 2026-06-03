@@ -166,7 +166,7 @@ export default function Announcements() {
 
       {/* ADD ANNOUNCEMENT FORM */}
       {showForm && (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border-2 border-gray-300 space-y-4">
           <h3 className="text-lg font-bold text-gray-800">Create Announcement</h3>
 
           <form
@@ -320,7 +320,7 @@ export default function Announcements() {
           paginated.map((a) => (
             <div
               key={a._id}
-              className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-start"
+              className="bg-white p-5 rounded-2xl shadow-sm border-2 border-gray-300 flex justify-between items-start"
             >
               <div className="max-w-3xl w-full">
                 <div className="flex items-center gap-3 mb-2 flex-wrap">

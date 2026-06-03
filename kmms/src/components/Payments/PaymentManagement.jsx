@@ -870,7 +870,7 @@ const PaymentManagement = ({ userId, role, user }) => {
       )}
 
       {isAdmin && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
+        <div className="bg-white rounded-2xl shadow-sm border-2 border-gray-300 p-5 space-y-5">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h3 className="text-lg font-bold text-gray-900">
@@ -907,7 +907,7 @@ const PaymentManagement = ({ userId, role, user }) => {
                 return (
                   <div
                     key={template._id}
-                    className="rounded-2xl border border-gray-100 shadow-sm bg-white p-4 space-y-4"
+                    className="rounded-2xl border-2 border-gray-300 shadow-sm bg-white p-4 space-y-4"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -1030,7 +1030,7 @@ const PaymentManagement = ({ userId, role, user }) => {
       </div>
 
       {isAdmin && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
+        <div className="bg-white rounded-2xl shadow-sm border-2 border-gray-300 p-5 space-y-4">
           {/* Title + Active/History tabs */}
           <div className="space-y-3">
             <h3 className="text-lg font-bold text-gray-900">Class Payment Status</h3>
@@ -1300,7 +1300,7 @@ const PaymentManagement = ({ userId, role, user }) => {
       )}
 
       {activeTab === "invoices" && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border-2 border-gray-300 overflow-hidden">
           {isAdmin && (() => {
             // Derive unique months from displayedInvoices for month tab
             const monthSet = new Set();
@@ -1849,7 +1849,7 @@ const PaymentManagement = ({ userId, role, user }) => {
                 <p className="text-gray-500 font-medium">All caught up! No pending payments.</p>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="bg-white rounded-2xl shadow-sm border-2 border-gray-300 overflow-hidden">
                 <table className="w-full text-left text-sm text-gray-600">
                   <thead className="bg-amber-50 text-amber-800 uppercase text-xs font-semibold border-b border-amber-100">
                     <tr>
@@ -1921,7 +1921,7 @@ const PaymentManagement = ({ userId, role, user }) => {
       })()}
 
       {activeTab === "ledger" && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border-2 border-gray-300 overflow-hidden">
           <table className="w-full text-left text-sm text-gray-600">
             <thead className="bg-white text-gray-700 uppercase text-xs font-semibold">
               <tr>
