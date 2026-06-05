@@ -358,8 +358,8 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`pb-4 px-6 text-xs font-black uppercase tracking-widest transition-all border-b-4 ${activeTab === tab
-                  ? "border-emerald-500 text-emerald-600"
-                  : "border-transparent text-gray-400 hover:text-gray-600"
+                ? "border-emerald-500 text-emerald-600"
+                : "border-transparent text-gray-400 hover:text-gray-600"
                 }`}
             >
               {tab} Teachers
@@ -384,7 +384,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-50/50 hover:bg-gray-50/50">
+                <TableRow className="border-gray-300 bg-gray-50/50 hover:bg-gray-50/50">
                   <TableHead className="w-16 px-6 font-black text-[10px] uppercase tracking-widest">#</TableHead>
                   <TableHead className="px-6 font-black text-[10px] uppercase tracking-widest">Teacher</TableHead>
                   <TableHead className="px-6 font-black text-[10px] uppercase tracking-widest">IC / Phone</TableHead>
@@ -423,8 +423,8 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                       <TableCell className="px-6 py-4 text-center">
                         <Badge
                           className={`rounded-full text-[9px] font-black uppercase tracking-widest border ${teacher.status === "Active"
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-50"
-                              : "bg-gray-50 text-gray-500 border-gray-100 hover:bg-gray-50"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-50"
+                            : "bg-gray-50 text-gray-500 border-gray-100 hover:bg-gray-50"
                             }`}
                         >
                           {teacher.status}
@@ -434,8 +434,8 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                         <div className="flex justify-end gap-1">
                           <button
                             className={`p-2 rounded-xl transition-all ${expandedTeacherId === (teacher._id || teacher.id)
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "hover:bg-emerald-50 hover:text-emerald-600 text-gray-400"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "hover:bg-emerald-50 hover:text-emerald-600 text-gray-400"
                               }`}
                             onClick={() => toggleExpand(teacher._id || teacher.id)}
                             title={expandedTeacherId === (teacher._id || teacher.id) ? "Hide Details" : "View All Details"}
