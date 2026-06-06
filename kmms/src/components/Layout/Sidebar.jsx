@@ -137,7 +137,7 @@ const Sidebar = ({
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:block w-72 bg-white border-r border-gray-100 animate-in slide-in-from-left duration-700">
+      <aside className="hidden md:block w-72 bg-white border-r border-gray-100 sticky top-0 h-screen animate-in slide-in-from-left duration-700">
         {sidebarContent}
       </aside>
 
