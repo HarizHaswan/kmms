@@ -556,6 +556,63 @@ const Reports = () => {
                       </CardContent>
                     </Card>
                   </div>
+
+                  <Card className="rounded-3xl border-2 border-gray-300 shadow-sm overflow-hidden mt-6">
+                    <CardHeader className="bg-red-50/20 border-b border-gray-100">
+                      <CardTitle className="text-gray-900 font-bold text-lg">Absence Log - {selectedAttendanceMonth}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      {attendanceStats.totalAbsent > 0 && !attendanceStats.absentees ? (
+                        <div className="text-center py-12 text-gray-500 bg-white rounded-lg">
+                          <AlertCircle className="w-12 h-12 mx-auto mb-3 text-orange-500" />
+                          <p className="font-semibold text-gray-800">Roster Unavailable</p>
+                          <p className="text-sm text-gray-400 mt-1">
+                            The API server does not support returning student names for this report.
+                            Please ensure the updated backend is deployed and running.
+                          </p>
+                        </div>
+                      ) : !attendanceStats.absentees || attendanceStats.absentees.length === 0 ? (
+                        <div className="text-center py-12 text-gray-500 bg-white rounded-lg">
+                          <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
+                          <p className="font-semibold text-gray-800">Perfect Attendance!</p>
+                          <p className="text-sm text-gray-400 mt-1">No student was absent during this period.</p>
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-sm text-gray-600">
+                            <thead className="bg-red-50 text-red-800 uppercase text-[10px] font-black tracking-widest border-b border-red-100">
+                              <tr>
+                                <th className="px-6 py-4 w-16">#</th>
+                                <th className="px-6 py-4">Student Name</th>
+                                <th className="px-6 py-4">Date Absent</th>
+                                <th className="px-6 py-4">Reason</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 bg-white">
+                              {attendanceStats.absentees.map((abs, idx) => (
+                                <tr key={`${abs.studentId}-${abs.date}-${idx}`} className="hover:bg-red-50/20 transition-colors">
+                                  <td className="px-6 py-4 text-gray-400 font-bold text-xs">{idx + 1}.</td>
+                                  <td className="px-6 py-4 font-bold text-gray-900">{abs.studentName}</td>
+                                  <td className="px-6 py-4 font-medium text-gray-700">
+                                    {new Date(abs.date).toLocaleDateString("en-MY", { year: "numeric", month: "short", day: "numeric" })}
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    {abs.reason ? (
+                                      <span className="px-2.5 py-1 bg-red-50 text-red-700 border border-red-100 rounded-full text-xs font-semibold">
+                                        {abs.reason}
+                                      </span>
+                                    ) : (
+                                      <span className="text-gray-400 text-xs italic">Not specified</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
               ) : (
                 <div className="text-center py-20 text-gray-500 bg-white rounded-lg border-2 border-gray-300">

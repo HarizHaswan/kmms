@@ -16,6 +16,7 @@ const payrollSchema = new mongoose.Schema(
       housing: { type: Number, default: 0 },
       transport: { type: Number, default: 0 },
       other: { type: Number, default: 0 },
+      otherLabel: { type: String, default: "Other" }
     },
     bonus: { type: Number, default: 0 },
     

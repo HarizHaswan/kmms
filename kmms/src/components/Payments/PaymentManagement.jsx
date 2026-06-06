@@ -922,8 +922,8 @@ const PaymentManagement = ({ userId, role, user }) => {
                       </div>
                       <span
                         className={`text-xs font-semibold px-2.5 py-1 rounded-full ${template.isActive
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-600"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-100 text-gray-600"
                           }`}
                       >
                         {template.isActive ? "Active" : "Paused"}
@@ -995,8 +995,8 @@ const PaymentManagement = ({ userId, role, user }) => {
           <button
             onClick={() => setActiveTab("invoices")}
             className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "invoices"
-                ? "border-indigo-500 text-indigo-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              ? "border-indigo-500 text-indigo-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
           >
             Invoices / Fees
@@ -1005,8 +1005,8 @@ const PaymentManagement = ({ userId, role, user }) => {
             <button
               onClick={() => setActiveTab("pending-verification")}
               className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === "pending-verification"
-                  ? "border-amber-500 text-amber-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                ? "border-amber-500 text-amber-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
             >
               Pending Verification
@@ -1020,8 +1020,8 @@ const PaymentManagement = ({ userId, role, user }) => {
           <button
             onClick={() => setActiveTab("ledger")}
             className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "ledger"
-                ? "border-indigo-500 text-indigo-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              ? "border-indigo-500 text-indigo-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
           >
             Payment Ledger
@@ -1039,8 +1039,8 @@ const PaymentManagement = ({ userId, role, user }) => {
                 type="button"
                 onClick={() => setClassStatusView("active")}
                 className={`px-3 py-2 rounded-xl text-sm font-medium border transition ${classStatusView === "active"
-                    ? "bg-slate-900 text-white border-slate-900"
-                    : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                  ? "bg-slate-900 text-white border-slate-900"
+                  : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
                   }`}
               >
                 Active ({activeClassStatusStudents.length})
@@ -1049,8 +1049,8 @@ const PaymentManagement = ({ userId, role, user }) => {
                 type="button"
                 onClick={() => setClassStatusView("history")}
                 className={`px-3 py-2 rounded-xl text-sm font-medium border transition ${classStatusView === "history"
-                    ? "bg-slate-900 text-white border-slate-900"
-                    : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                  ? "bg-slate-900 text-white border-slate-900"
+                  : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
                   }`}
               >
                 History ({historyClassStatusStudents.length})
@@ -1064,8 +1064,8 @@ const PaymentManagement = ({ userId, role, user }) => {
               type="button"
               onClick={() => { setSelectedClassFilter("all"); setClassStatusPage(1); }}
               className={`px-3 py-2 rounded-xl text-sm font-medium border transition ${selectedClassFilter === "all"
-                  ? "bg-slate-900 text-white border-slate-900"
-                  : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                ? "bg-slate-900 text-white border-slate-900"
+                : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
                 }`}
             >
               All Classes
@@ -1078,8 +1078,8 @@ const PaymentManagement = ({ userId, role, user }) => {
                   type="button"
                   onClick={() => { setSelectedClassFilter(classId); setClassStatusPage(1); }}
                   className={`px-3 py-2 rounded-xl text-sm font-medium border transition ${selectedClassFilter === classId
-                      ? "bg-indigo-600 text-white border-indigo-600"
-                      : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                    ? "bg-indigo-600 text-white border-indigo-600"
+                    : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
                     }`}
                 >
                   {getClassLabel(classItem)}
@@ -1146,8 +1146,9 @@ const PaymentManagement = ({ userId, role, user }) => {
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-gray-600">
-              <thead className="bg-white text-gray-700 uppercase text-xs font-semibold">
+              <thead className="bg-blue-50 text-gray-700 uppercase text-xs font-semibold">
                 <tr>
+                  <th className="px-4 py-4 w-12 text-center">#</th>
                   <th className="px-4 py-4">Student</th>
                   <th className="px-4 py-4">Class</th>
                   <th className="px-4 py-4">Status</th>
@@ -1185,15 +1186,18 @@ const PaymentManagement = ({ userId, role, user }) => {
                     <>
                       {csSlice.length === 0 ? (
                         <tr>
-                          <td colSpan="7" className="px-4 py-8 text-center text-gray-500">
+                          <td colSpan="8" className="px-4 py-8 text-center text-gray-500">
                             {classStatusView === "history"
                               ? "No historical students found for this class."
                               : "No active students found for this class."}
                           </td>
                         </tr>
                       ) : (
-                        csSlice.map((row) => (
+                        csSlice.map((row, index) => (
                           <tr key={row.studentId} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-4 py-4 text-center text-gray-400 font-bold text-xs select-none">
+                              {(safeCsPage - 1) * CS_PAGE_SIZE + index + 1}.
+                            </td>
                             <td className="px-4 py-4">
                               <div className="font-medium text-gray-900">{row.studentName}</div>
                               {row.recordStatus !== "active" && (
@@ -1276,8 +1280,8 @@ const PaymentManagement = ({ userId, role, user }) => {
                         type="button"
                         onClick={() => setClassStatusPage(pg)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${pg === safeCsPage
-                            ? "bg-indigo-600 text-white"
-                            : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                          ? "bg-indigo-600 text-white"
+                          : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
                           }`}
                       >
                         {pg}
@@ -1424,7 +1428,7 @@ const PaymentManagement = ({ userId, role, user }) => {
 
                 {/* ── ADMIN VIEW: flat table ── */}
                 <table className="w-full text-left text-sm text-gray-600">
-                  <thead className="bg-white text-gray-700 uppercase text-xs font-semibold">
+                  <thead className="bg-blue-50 text-gray-700 uppercase text-xs font-semibold">
                     <tr>
                       <th className="px-6 py-4 w-10">#</th>
                       <th className="px-6 py-4">Student</th>
@@ -1562,8 +1566,8 @@ const PaymentManagement = ({ userId, role, user }) => {
                             type="button"
                             onClick={() => setAdminInvoicePage(pg)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${pg === safePage
-                                ? "bg-indigo-600 text-white"
-                                : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                              ? "bg-indigo-600 text-white"
+                              : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
                               }`}
                           >
                             {pg}
@@ -2176,8 +2180,8 @@ const PaymentManagement = ({ userId, role, user }) => {
                         <label
                           key={studentId}
                           className={`rounded-xl border p-3 cursor-pointer transition ${selected
-                              ? "border-indigo-300 bg-indigo-50"
-                              : "border-gray-200 bg-white hover:bg-gray-50"
+                            ? "border-indigo-300 bg-indigo-50"
+                            : "border-gray-200 bg-white hover:bg-gray-50"
                             }`}
                         >
                           <div className="flex items-start gap-3">

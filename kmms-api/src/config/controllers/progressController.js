@@ -40,11 +40,17 @@ async function populateReportQuery(query) {
   return query
     .populate({
       path: "studentId",
-      select: "name status classId",
-      populate: {
-        path: "classId",
-        select: "className yearGroup",
-      },
+      select: "name status classId parentId parentName",
+      populate: [
+        {
+          path: "classId",
+          select: "className yearGroup",
+        },
+        {
+          path: "parentId",
+          select: "name",
+        }
+      ],
     })
     .populate("teacherId", "name")
     .sort({ createdAt: -1 });
@@ -73,11 +79,17 @@ exports.getProgressReport = async (req, res, next) => {
     const report = await ProgressReport.findById(req.params.id)
       .populate({
         path: "studentId",
-        select: "name status classId",
-        populate: {
-          path: "classId",
-          select: "className yearGroup",
-        },
+        select: "name status classId parentId parentName",
+        populate: [
+          {
+            path: "classId",
+            select: "className yearGroup",
+          },
+          {
+            path: "parentId",
+            select: "name",
+          }
+        ],
       })
       .populate("teacherId", "name");
 
@@ -117,11 +129,17 @@ exports.createProgressReport = async (req, res, next) => {
     const populated = await ProgressReport.findById(newReport._id)
       .populate({
         path: "studentId",
-        select: "name status classId",
-        populate: {
-          path: "classId",
-          select: "className yearGroup",
-        },
+        select: "name status classId parentId parentName",
+        populate: [
+          {
+            path: "classId",
+            select: "className yearGroup",
+          },
+          {
+            path: "parentId",
+            select: "name",
+          }
+        ],
       })
       .populate("teacherId", "name");
 
@@ -154,11 +172,17 @@ exports.updateProgressReport = async (req, res, next) => {
     const populated = await ProgressReport.findById(report._id)
       .populate({
         path: "studentId",
-        select: "name status classId",
-        populate: {
-          path: "classId",
-          select: "className yearGroup",
-        },
+        select: "name status classId parentId parentName",
+        populate: [
+          {
+            path: "classId",
+            select: "className yearGroup",
+          },
+          {
+            path: "parentId",
+            select: "name",
+          }
+        ],
       })
       .populate("teacherId", "name");
 

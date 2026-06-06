@@ -67,6 +67,7 @@ exports.generateMonthlyPayroll = async (req, res, next) => {
           housing: profile.allowances?.housing || 0,
           transport: profile.allowances?.transport || 0,
           other: profile.allowances?.other || 0,
+          otherLabel: profile.allowances?.otherLabel || "Other",
         },
         statutory: {
           epf: { 

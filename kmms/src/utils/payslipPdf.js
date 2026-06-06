@@ -98,7 +98,7 @@ export function downloadPayslipPdf(payroll) {
   }
   if (payroll.allowances?.housing > 0) row("Housing Allowance", payroll.allowances.housing);
   if (payroll.allowances?.transport > 0) row("Transport Allowance", payroll.allowances.transport);
-  if (payroll.allowances?.other > 0) row("Other Allowance", payroll.allowances.other);
+  if (payroll.allowances?.other > 0) row(payroll.allowances?.otherLabel || "Other Allowance", payroll.allowances.other);
   if (payroll.bonus > 0) row("Performance Bonus", payroll.bonus);
 
   y += 4;

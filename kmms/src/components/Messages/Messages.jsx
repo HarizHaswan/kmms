@@ -10,7 +10,7 @@ export default function Messages({ user }) {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   const chatEndRef = useRef(null);
 
   useEffect(() => {
@@ -105,7 +105,7 @@ export default function Messages({ user }) {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const filteredUsers = users.filter(u => 
+  const filteredUsers = users.filter(u =>
     u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (u.studentNames && u.studentNames.toLowerCase().includes(searchTerm.toLowerCase()))
   );
@@ -125,7 +125,7 @@ export default function Messages({ user }) {
         <div className="p-4 border-b border-gray-200 bg-white">
           <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-purple-600" />
-          {user.role === "admin" ? "Monitor Chats" : "Messages"}
+            {user.role === "admin" ? "Monitor Chats" : "Messages"}
           </h2>
           <p className="text-xs text-gray-500 mt-1 mb-3">
             {user.role === "admin" ? "Select a user to view history" : "Select someone to chat with"}
@@ -161,14 +161,14 @@ export default function Messages({ user }) {
               {searchTerm ? "No matches found." : "No users found."}
             </p>
           ) : (
-            filteredUsers.map((u) => (
+            filteredUsers.map((u, index) => (
               <button
                 key={u._id}
                 onClick={() => setSelectedUser(u)}
-                className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition-colors ${
-                  selectedUser?._id === u._id ? "bg-purple-100 ring-1 ring-purple-300" : "hover:bg-gray-100"
-                }`}
+                className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition-colors ${selectedUser?._id === u._id ? "bg-purple-100 ring-1 ring-purple-300" : "hover:bg-gray-100"
+                  }`}
               >
+                <span className="text-xs font-bold text-gray-400 select-none w-5 text-right shrink-0">{index + 1}.</span>
                 <div className="relative shrink-0">
                   <div className="w-10 h-10 rounded-full bg-purple-200 text-purple-700 flex items-center justify-center font-bold">
                     {u.profileImage ? (
@@ -186,7 +186,7 @@ export default function Messages({ user }) {
                 <div className="overflow-hidden flex-1">
                   <p className="font-semibold text-gray-900 truncate">{u.name}</p>
                   <p className="text-[11px] text-gray-500 capitalize truncate flex items-center gap-1">
-                    <span className="font-medium text-purple-700">{u.role}</span> 
+                    <span className="font-medium text-purple-700">{u.role}</span>
                     {u.role === "parent" && u.studentNames && ` • ${u.studentNames}`}
                     {u.classAssigned && ` • Class ${u.classAssigned}`}
                   </p>
@@ -204,11 +204,11 @@ export default function Messages({ user }) {
             {/* CHAT HEADER */}
             <div className="p-4 border-b border-gray-200 bg-white flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-purple-200 text-purple-700 flex items-center justify-center font-bold shrink-0">
-                 {selectedUser.profileImage ? (
-                    <img src={selectedUser.profileImage} alt="" className="w-full h-full rounded-full object-cover" />
-                  ) : (
-                    <UserIcon className="w-5 h-5" />
-                  )}
+                {selectedUser.profileImage ? (
+                  <img src={selectedUser.profileImage} alt="" className="w-full h-full rounded-full object-cover" />
+                ) : (
+                  <UserIcon className="w-5 h-5" />
+                )}
               </div>
               <div>
                 <h3 className="font-bold text-gray-900">{selectedUser.name}</h3>
@@ -244,16 +244,15 @@ export default function Messages({ user }) {
                   return (
                     <div key={msg._id} className={`flex flex-col ${isMine && user.role !== "admin" ? "items-end" : "items-start"}`}>
                       {showName && (
-                         <span className="text-[10px] text-gray-500 mb-1 ml-1 font-medium">
-                           {msg.senderId?.name}
-                         </span>
+                        <span className="text-[10px] text-gray-500 mb-1 ml-1 font-medium">
+                          {msg.senderId?.name}
+                        </span>
                       )}
                       <div
-                        className={`max-w-[70%] p-3 rounded-2xl shadow-sm ${
-                          isMine && user.role !== "admin"
+                        className={`max-w-[70%] p-3 rounded-2xl shadow-sm ${isMine && user.role !== "admin"
                             ? "bg-purple-600 text-white rounded-tr-sm"
-                            : "bg-white border border-gray-200 text-gray-800 rounded-tl-sm"
-                        }`}
+                            : "bg-purple-100 border border-purple-100 text-black-900 rounded-tl-sm"
+                          }`}
                       >
                         <p className="text-sm">{msg.content}</p>
                       </div>

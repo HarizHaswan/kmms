@@ -133,25 +133,25 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl px-6 py-6 shadow-lg shadow-emerald-100 transition-all flex items-center gap-2">
+            <Button className="bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl px-6 py-6 shadow-lg shadow-blue-100 transition-all flex items-center gap-2">
               <Plus className="w-5 h-5" />
               Add Teacher
             </Button>
           </DialogTrigger>
 
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl p-0 border-none shadow-2xl">
-            <DialogHeader className="bg-emerald-600 p-8 text-white rounded-t-3xl">
+            <DialogHeader className="bg-blue-600 p-8 text-white rounded-t-3xl">
               <DialogTitle className="text-2xl font-black uppercase tracking-tight">
                 {editingTeacher ? "Edit Teacher Record" : "Register New Teacher"}
               </DialogTitle>
-              <p className="text-emerald-100 text-xs mt-1">Complete all sections to maintain accurate staff records.</p>
+              <p className="text-blue-100 text-xs mt-1">Complete all sections to maintain accurate staff records.</p>
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="p-8 space-y-8">
               {/* 1. PERSONAL INFO */}
               <section className="space-y-4">
                 <div className="flex items-center gap-2 border-b border-gray-100 pb-2 mb-4">
-                  <User className="w-4 h-4 text-emerald-600" />
+                  <User className="w-4 h-4 text-blue-600" />
                   <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Personal Information</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -162,7 +162,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       required
-                      className="bg-gray-50 border-transparent focus:bg-white focus:ring-2 focus:ring-emerald-200 rounded-xl py-6"
+                      className="bg-gray-50 border-transparent focus:bg-white focus:ring-2 focus:ring-blue-200 rounded-xl py-6"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -172,7 +172,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                       value={formData.icNumber}
                       onChange={(e) => setFormData({ ...formData, icNumber: e.target.value })}
                       required
-                      className="bg-gray-50 border-transparent focus:bg-white focus:ring-2 focus:ring-emerald-200 rounded-xl py-6"
+                      className="bg-gray-50 border-transparent focus:bg-white focus:ring-2 focus:ring-blue-200 rounded-xl py-6"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -182,7 +182,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       required
-                      className="bg-gray-50 border-transparent focus:bg-white focus:ring-2 focus:ring-emerald-200 rounded-xl py-6"
+                      className="bg-gray-50 border-transparent focus:bg-white focus:ring-2 focus:ring-blue-200 rounded-xl py-6"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -193,7 +193,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       required
-                      className="bg-gray-50 border-transparent focus:bg-white focus:ring-2 focus:ring-emerald-200 rounded-xl py-6"
+                      className="bg-gray-50 border-transparent focus:bg-white focus:ring-2 focus:ring-blue-200 rounded-xl py-6"
                     />
                   </div>
                   {!editingTeacher && (
@@ -205,7 +205,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         required
-                        className="bg-gray-50 border-transparent focus:bg-white focus:ring-2 focus:ring-emerald-200 rounded-xl py-6"
+                        className="bg-gray-50 border-transparent focus:bg-white focus:ring-2 focus:ring-blue-200 rounded-xl py-6"
                       />
                     </div>
                   )}
@@ -215,14 +215,14 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
               {/* 2. EMPLOYMENT INFO */}
               <section className="space-y-4">
                 <div className="flex items-center gap-2 border-b border-gray-100 pb-2 mb-4">
-                  <Briefcase className="w-4 h-4 text-emerald-600" />
+                  <Briefcase className="w-4 h-4 text-blue-600" />
                   <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Employment Information</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">Qualification / Position</label>
                     <select
-                      className="w-full bg-gray-50 border-transparent rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-emerald-200 outline-none text-sm font-medium h-[50px]"
+                      className="w-full bg-gray-50 border-transparent rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-blue-200 outline-none text-sm font-medium h-[50px]"
                       value={formData.qualification}
                       onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
                       required
@@ -239,13 +239,13 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                       value={formData.hireDate}
                       onChange={(e) => setFormData({ ...formData, hireDate: e.target.value })}
                       required
-                      className="bg-gray-50 border-transparent focus:bg-white focus:ring-2 focus:ring-emerald-200 rounded-xl py-6"
+                      className="bg-gray-50 border-transparent focus:bg-white focus:ring-2 focus:ring-blue-200 rounded-xl py-6"
                     />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">Class Assigned</label>
                     <select
-                      className="w-full bg-gray-50 border-transparent rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-emerald-200 outline-none text-sm font-medium h-[50px]"
+                      className="w-full bg-gray-50 border-transparent rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-blue-200 outline-none text-sm font-medium h-[50px]"
                       value={formData.classAssigned}
                       onChange={(e) => setFormData({ ...formData, classAssigned: e.target.value })}
                       required
@@ -259,7 +259,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">Status</label>
                     <select
-                      className="w-full bg-gray-50 border-transparent rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-emerald-200 outline-none text-sm font-medium h-[50px]"
+                      className="w-full bg-gray-50 border-transparent rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-blue-200 outline-none text-sm font-medium h-[50px]"
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                     >
@@ -273,29 +273,36 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
               {/* 3. PAYROLL INFO */}
               <section className="space-y-4">
                 <div className="flex items-center gap-2 border-b border-gray-100 pb-2 mb-4">
-                  <DollarSign className="w-4 h-4 text-emerald-600" />
+                  <DollarSign className="w-4 h-4 text-blue-600" />
                   <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Payroll & Statutory Information</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-6 rounded-2xl border border-gray-100">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">Basic Salary (RM)</label>
-                    <Input
-                      type="number"
-                      value={formData.salaryProfile.baseSalary}
-                      onChange={(e) => setFormData({ ...formData, salaryProfile: { ...formData.salaryProfile, baseSalary: Number(e.target.value) } })}
-                      required
-                      className="bg-white border-gray-200 focus:ring-2 focus:ring-emerald-200 rounded-xl py-6"
-                    />
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">Basic Salary</label>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-4 text-gray-400 font-bold text-sm pointer-events-none z-10">RM</span>
+                      <Input
+                        type="number"
+                        value={formData.salaryProfile.baseSalary}
+                        onChange={(e) => setFormData({ ...formData, salaryProfile: { ...formData.salaryProfile, baseSalary: Number(e.target.value) } })}
+                        required
+                        className="bg-white border-gray-200 focus:ring-2 focus:ring-blue-200 rounded-xl py-6 pl-12"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">Overtime Rate (RM/hr)</label>
-                    <Input
-                      type="number"
-                      value={formData.salaryProfile.overtimeRate}
-                      onChange={(e) => setFormData({ ...formData, salaryProfile: { ...formData.salaryProfile, overtimeRate: Number(e.target.value) } })}
-                      required
-                      className="bg-white border-gray-200 focus:ring-2 focus:ring-emerald-200 rounded-xl py-6"
-                    />
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">Overtime Rate</label>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-4 text-gray-400 font-bold text-sm pointer-events-none z-10">RM</span>
+                      <Input
+                        type="number"
+                        value={formData.salaryProfile.overtimeRate}
+                        onChange={(e) => setFormData({ ...formData, salaryProfile: { ...formData.salaryProfile, overtimeRate: Number(e.target.value) } })}
+                        required
+                        className="bg-white border-gray-200 focus:ring-2 focus:ring-blue-200 rounded-xl py-6 pl-12 pr-12"
+                      />
+                      <span className="absolute right-4 text-gray-400 font-bold text-xs pointer-events-none z-10">/ hr</span>
+                    </div>
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">EPF Number</label>
@@ -303,7 +310,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                       placeholder="EPF Number"
                       value={formData.salaryProfile.epfNo}
                       onChange={(e) => setFormData({ ...formData, salaryProfile: { ...formData.salaryProfile, epfNo: e.target.value } })}
-                      className="bg-white border-gray-200 focus:ring-2 focus:ring-emerald-200 rounded-xl py-6"
+                      className="bg-white border-gray-200 focus:ring-2 focus:ring-blue-200 rounded-xl py-6"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -312,7 +319,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                       placeholder="Tax Number"
                       value={formData.salaryProfile.taxNo}
                       onChange={(e) => setFormData({ ...formData, salaryProfile: { ...formData.salaryProfile, taxNo: e.target.value } })}
-                      className="bg-white border-gray-200 focus:ring-2 focus:ring-emerald-200 rounded-xl py-6"
+                      className="bg-white border-gray-200 focus:ring-2 focus:ring-blue-200 rounded-xl py-6"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -321,7 +328,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                       placeholder="e.g. Maybank"
                       value={formData.salaryProfile.bankName}
                       onChange={(e) => setFormData({ ...formData, salaryProfile: { ...formData.salaryProfile, bankName: e.target.value } })}
-                      className="bg-white border-gray-200 focus:ring-2 focus:ring-emerald-200 rounded-xl py-6"
+                      className="bg-white border-gray-200 focus:ring-2 focus:ring-blue-200 rounded-xl py-6"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -330,7 +337,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                       placeholder="Account Number"
                       value={formData.salaryProfile.bankAccountNo}
                       onChange={(e) => setFormData({ ...formData, salaryProfile: { ...formData.salaryProfile, bankAccountNo: e.target.value } })}
-                      className="bg-white border-gray-200 focus:ring-2 focus:ring-emerald-200 rounded-xl py-6"
+                      className="bg-white border-gray-200 focus:ring-2 focus:ring-blue-200 rounded-xl py-6"
                     />
                   </div>
                 </div>
@@ -340,7 +347,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                 <Button type="button" variant="ghost" onClick={resetForm} className="flex-1 py-6 rounded-2xl font-bold uppercase text-xs tracking-widest text-gray-400 hover:bg-gray-50 transition-all">
                   Discard
                 </Button>
-                <Button type="submit" className="flex-1 py-6 bg-emerald-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-emerald-700 shadow-xl shadow-emerald-100 transition-all flex items-center justify-center gap-2">
+                <Button type="submit" className="flex-1 py-6 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-100 transition-all flex items-center justify-center gap-2">
                   <Save className="w-5 h-5" />
                   {editingTeacher ? "Update Record" : "Register Teacher"}
                 </Button>
@@ -358,7 +365,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`pb-4 px-6 text-xs font-black uppercase tracking-widest transition-all border-b-4 ${activeTab === tab
-                ? "border-emerald-500 text-emerald-600"
+                ? "border-blue-500 text-blue-600"
                 : "border-transparent text-gray-400 hover:text-gray-600"
                 }`}
             >
@@ -373,18 +380,18 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
             placeholder="Quick search staff..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-100 outline-none text-xs transition-all"
+            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 outline-none text-xs transition-all"
           />
         </div>
       </div>
 
       {/* Table */}
-      <Card className="rounded-3xl border-2 border-gray-300 shadow-sm overflow-hidden">
+      <Card className="rounded-3xl border-2 border-blue-300 shadow-sm overflow-hidden">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-gray-300 bg-gray-50/50 hover:bg-gray-50/50">
+                <TableRow className="border-gray-300 bg-blue-50 hover:bg-blue-50">
                   <TableHead className="w-16 px-6 font-black text-[10px] uppercase tracking-widest">#</TableHead>
                   <TableHead className="px-6 font-black text-[10px] uppercase tracking-widest">Teacher</TableHead>
                   <TableHead className="px-6 font-black text-[10px] uppercase tracking-widest">IC / Phone</TableHead>
@@ -398,7 +405,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
               <TableBody>
                 {filteredTeachers.map((teacher, index) => (
                   <React.Fragment key={teacher._id || teacher.id}>
-                    <TableRow className="hover:bg-emerald-50/30 transition-colors">
+                    <TableRow className="hover:bg-blue-50/30 transition-colors">
                       <TableCell className="px-6 py-4 font-bold text-gray-400 text-xs">{index + 1}.</TableCell>
                       <TableCell className="px-6 py-4">
                         <div>
@@ -413,7 +420,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                         </div>
                       </TableCell>
                       <TableCell className="px-6 py-4">
-                        <Badge variant="outline" className="rounded-lg border-emerald-100 text-emerald-700 bg-emerald-50/50 text-[10px] font-bold px-2 py-0.5">
+                        <Badge variant="outline" className="rounded-lg border-blue-100 text-blue-700 bg-blue-50/50 text-[10px] font-bold px-2 py-0.5">
                           {teacher.classAssigned || "Unassigned"}
                         </Badge>
                       </TableCell>
@@ -423,7 +430,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                       <TableCell className="px-6 py-4 text-center">
                         <Badge
                           className={`rounded-full text-[9px] font-black uppercase tracking-widest border ${teacher.status === "Active"
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-50"
+                            ? "bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-50"
                             : "bg-gray-50 text-gray-500 border-gray-100 hover:bg-gray-50"
                             }`}
                         >
@@ -434,8 +441,8 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                         <div className="flex justify-end gap-1">
                           <button
                             className={`p-2 rounded-xl transition-all ${expandedTeacherId === (teacher._id || teacher.id)
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "hover:bg-emerald-50 hover:text-emerald-600 text-gray-400"
+                              ? "bg-blue-100 text-blue-700"
+                              : "hover:bg-blue-50 hover:text-blue-600 text-gray-400"
                               }`}
                             onClick={() => toggleExpand(teacher._id || teacher.id)}
                             title={expandedTeacherId === (teacher._id || teacher.id) ? "Hide Details" : "View All Details"}
@@ -448,7 +455,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                           </button>
 
                           <button
-                            className="hover:bg-emerald-50 hover:text-emerald-600 text-gray-400 p-2 rounded-xl transition-all"
+                            className="hover:bg-blue-50 hover:text-blue-600 text-gray-400 p-2 rounded-xl transition-all"
                             onClick={() => {
                               setEditingTeacher(teacher);
                               setFormData({
@@ -488,8 +495,8 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
                             {/* Left Column: Personal & Employment */}
                             <div className="space-y-4 bg-white p-6 rounded-2xl border-2 border-gray-300 shadow-sm relative overflow-hidden">
-                              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-50/20 to-primary-light/5 rounded-bl-full pointer-events-none" />
-                              <h4 className="font-black text-[10px] uppercase tracking-widest text-emerald-600 border-b border-gray-50 pb-2 flex items-center gap-2">
+                              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-50/20 to-primary-light/5 rounded-bl-full pointer-events-none" />
+                              <h4 className="font-black text-[10px] uppercase tracking-widest text-blue-600 border-b border-gray-50 pb-2 flex items-center gap-2">
                                 <User className="w-3.5 h-3.5" /> Profile & Personal Details
                               </h4>
                               <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs font-semibold">
@@ -515,7 +522,7 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                                 </div>
                                 <div>
                                   <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5">Class Assigned</span>
-                                  <span className="text-emerald-700 font-bold">{teacher.classAssigned || "Unassigned"}</span>
+                                  <span className="text-blue-700 font-bold">{teacher.classAssigned || "Unassigned"}</span>
                                 </div>
                                 <div>
                                   <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5">Hire Date</span>
@@ -523,15 +530,15 @@ const TeacherList = ({ teachers = [], onAdd, onUpdate, onDelete }) => {
                                 </div>
                                 <div>
                                   <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5">Account Status</span>
-                                  <span className={`capitalize font-bold ${teacher.status === 'Active' ? 'text-emerald-600' : 'text-gray-500'}`}>{teacher.status || "Active"}</span>
+                                  <span className={`capitalize font-bold ${teacher.status === 'Active' ? 'text-blue-600' : 'text-gray-500'}`}>{teacher.status || "Active"}</span>
                                 </div>
                               </div>
                             </div>
 
                             {/* Right Column: Payroll & Statutory */}
                             <div className="space-y-4 bg-white p-6 rounded-2xl border-2 border-gray-300 shadow-sm relative overflow-hidden">
-                              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-50/20 to-primary-light/5 rounded-bl-full pointer-events-none" />
-                              <h4 className="font-black text-[10px] uppercase tracking-widest text-emerald-600 border-b border-gray-50 pb-2 flex items-center gap-2">
+                              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-50/20 to-primary-light/5 rounded-bl-full pointer-events-none" />
+                              <h4 className="font-black text-[10px] uppercase tracking-widest text-blue-600 border-b border-gray-50 pb-2 flex items-center gap-2">
                                 <DollarSign className="w-3.5 h-3.5" /> Salary & Banking Details
                               </h4>
                               <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs font-semibold">

@@ -8,6 +8,8 @@ import {
   Plus,
   UserRound,
   X,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   createProgressReport,
@@ -49,6 +51,7 @@ const ProgressReports = ({ role, user }) => {
   const [selectedStudentFilter, setSelectedStudentFilter] = useState("all");
   const [form, setForm] = useState(DEFAULT_FORM);
   const [formSubmitting, setFormSubmitting] = useState(false);
+  const [expandedReportId, setExpandedReportId] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -632,7 +635,7 @@ const ProgressReports = ({ role, user }) => {
             </div>
           </div>
 
-          {/* Reports Grid/List */}
+          {/* Reports Table List */}
           {filteredReports.length === 0 ? (
             <div className="py-16 text-center">
               <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
@@ -640,43 +643,76 @@ const ProgressReports = ({ role, user }) => {
               <p className="text-gray-400 text-sm mt-1">Teachers will create reports directly from their dashboard.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {filteredReports.map((report) => (
-                <div
-                  key={report._id}
-                  className="bg-white rounded-2xl border-2 border-gray-300 hover:border-accent/20 hover:shadow-md transition-all duration-300 p-6 flex flex-col justify-between"
-                >
-                  <div className="space-y-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h4 className="text-base font-bold text-gray-900 font-poppins">
-                          {report.studentId?.name || "Student"}
-                        </h4>
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-xs text-gray-500">
-                          <span className="font-semibold px-2 py-0.5 rounded bg-gray-100 text-gray-700">
-                            {report.studentId?.classId?.className || "Awaiting Class"}
-                          </span>
-                          <span>•</span>
-                          <span className="font-semibold text-accent bg-accent/5 px-2 py-0.5 rounded">
-                            Posted by: {report.teacherId?.name || "Teacher"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="bg-blue-50 text-gray-500 uppercase text-[10px] font-black tracking-widest border-b border-gray-100">
+                    <th className="px-6 py-4 w-10">#</th>
+                    <th className="px-6 py-4">Name</th>
+                    <th className="px-6 py-4">Class</th>
+                    <th className="px-6 py-4">Posted By</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredReports.map((report, idx) => {
+                    const isExpanded = expandedReportId === report._id;
 
-                    <div className="rounded-xl border border-gray-50 bg-gray-50/50 p-4 min-h-[100px]">
-                      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap font-poppins">
-                        {report.summary}
-                      </p>
-                    </div>
-                  </div>
+                    return (
+                      <React.Fragment key={report._id}>
+                        <tr className={`hover:bg-indigo-50/30 transition-colors ${isExpanded ? "bg-indigo-50/50" : ""}`}>
+                          <td className="px-6 py-4 font-bold text-gray-400 select-none">{idx + 1}.</td>
+                          <td className="px-6 py-4 font-bold text-gray-900">
+                            {report.studentId?.name || "Student"}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="font-semibold px-2.5 py-1 rounded bg-gray-100 text-gray-700 text-xs">
+                              {report.studentId?.classId?.className || "Awaiting Class"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 font-semibold text-gray-700">
+                            {report.teacherId?.name || "Teacher"}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <button
+                              type="button"
+                              onClick={() => setExpandedReportId(isExpanded ? null : report._id)}
+                              className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-1.5 ml-auto animate-in duration-300"
+                            >
+                              {isExpanded ? "Hide Report" : "View Report"}
+                              {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                            </button>
+                          </td>
+                        </tr>
 
-                  <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-50 text-xs text-gray-400">
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>Logged on: {new Date(report.createdAt).toLocaleString()}</span>
-                  </div>
-                </div>
-              ))}
+                        {/* Expanded Report Content Row */}
+                        {isExpanded && (
+                          <tr className="bg-indigo-50/30">
+                            <td colSpan="5" className="px-8 py-6 border-y border-indigo-100">
+                              <div className="max-w-3xl mx-auto space-y-4">
+                                <div className="flex items-center justify-between border-b border-indigo-100/50 pb-2">
+                                  <div className="flex items-center gap-2 text-xs text-gray-500 font-semibold">
+                                    <Calendar className="w-4 h-4 text-indigo-600" />
+                                    <span>Logged on: {new Date(report.createdAt).toLocaleString()}</span>
+                                  </div>
+                                  <span className="text-[10px] font-black text-indigo-800 bg-indigo-100/50 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                    Progress Update
+                                  </span>
+                                </div>
+                                <div className="bg-white p-5 rounded-2xl border border-indigo-100 shadow-sm">
+                                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap font-poppins">
+                                    {report.summary}
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </div>

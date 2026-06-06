@@ -1,19 +1,96 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { 
-  Loader2, Plus, CheckCircle, Clock, Search, Edit2, 
-  Check, X, Download, FileText, Settings, User, 
+import {
+  Loader2, Plus, CheckCircle, Clock, Search, Edit2,
+  Check, X, Download, FileText, Settings, User,
   DollarSign, TrendingUp, AlertCircle, Save, Calendar,
   ShieldCheck, Info, ChevronDown, ChevronUp
 } from "lucide-react";
-import { 
-  getPayrollRecords, 
-  generatePayroll, 
-  getPayrollStats, 
-  updatePayrollRecord, 
-  markPayrollAsPaid 
+import {
+  getPayrollRecords,
+  generatePayroll,
+  getPayrollStats,
+  updatePayrollRecord,
+  markPayrollAsPaid
 } from "../../api/payroll";
 import { getTeachers, updateTeacher } from "../../api/teachers";
 import { downloadPayslipPdf } from "../../utils/payslipPdf";
+
+const calculateEPF = (base) => {
+  const baseNum = Number(base || 0);
+  if (baseNum <= 0) return { employer: 0, employee: 0 };
+  const employerRate = baseNum <= 5000 ? 0.13 : 0.12;
+  return {
+    employer: Math.ceil(baseNum * employerRate),
+    employee: Math.ceil(baseNum * 0.11)
+  };
+};
+
+const getEisContribution = (wages) => {
+  const base = Number(wages || 0);
+  if (base <= 0) return { employer: 0, employee: 0 };
+  
+  let val = 0;
+  if (base <= 30.00) {
+    val = 0.05;
+  } else if (base <= 50.00) {
+    val = 0.10;
+  } else if (base <= 70.00) {
+    val = 0.15;
+  } else if (base <= 100.00) {
+    val = 0.20;
+  } else if (base <= 140.00) {
+    val = 0.25;
+  } else if (base <= 200.00) {
+    val = 0.35;
+  } else {
+    const capped = Math.min(base, 6000.00);
+    const bracketMin = Math.floor((capped - 0.01) / 100) * 100;
+    const midpoint = bracketMin + 50;
+    val = Number((midpoint * 0.002).toFixed(2));
+  }
+  
+  return {
+    employer: val,
+    employee: val
+  };
+};
+
+const getSocsoContribution = (wages) => {
+  const base = Number(wages || 0);
+  if (base <= 0) return { employer: 0, employee: 0 };
+
+  if (base <= 30.00) return { employer: 0.40, employee: 0.10 };
+  if (base <= 50.00) return { employer: 0.70, employee: 0.20 };
+  if (base <= 70.00) return { employer: 1.10, employee: 0.30 };
+  if (base <= 100.00) return { employer: 1.50, employee: 0.40 };
+  if (base <= 140.00) return { employer: 2.10, employee: 0.60 };
+  if (base <= 200.00) return { employer: 2.95, employee: 0.85 };
+
+  const capped = Math.min(base, 6000.00);
+  const bracketMin = Math.floor((capped - 0.01) / 100) * 100;
+  const midpoint = bracketMin + 50;
+
+  const employee = Number((midpoint * 0.005).toFixed(2));
+
+  const hundredBase = bracketMin / 100;
+  const rawEmployer = midpoint * 0.0175;
+  
+  let employer;
+  if (hundredBase % 2 === 0) {
+    const cents = Math.round(rawEmployer * 100);
+    const roundedCents = Math.floor(cents / 5) * 5;
+    employer = roundedCents / 100;
+  } else {
+    const cents = Math.round(rawEmployer * 100);
+    const roundedCents = Math.ceil(cents / 5) * 5;
+    employer = roundedCents / 100;
+  }
+
+  return {
+    employer: Number(employer.toFixed(2)),
+    employee: Number(employee.toFixed(2))
+  };
+};
 
 const AdminPayroll = () => {
   const [activeTab, setActiveTab] = useState("payroll"); // "payroll" | "profiles"
@@ -22,14 +99,15 @@ const AdminPayroll = () => {
   const [teachers, setTeachers] = useState([]);
   const [stats, setStats] = useState(null);
   const [search, setSearch] = useState("");
-  
+
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
-  
+
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [showStatDetails, setShowStatDetails] = useState(null); // id of record showing details
-  
+  const [showAllowanceDetails, setShowAllowanceDetails] = useState(null); // id of record showing allowance details
+
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [profileForm, setProfileForm] = useState({});
@@ -73,7 +151,12 @@ const AdminPayroll = () => {
       overtimeHours: record.overtimeHours,
       bonus: record.bonus,
       deductions: record.deductions,
-      allowances: record.allowances,
+      allowances: {
+        housing: record.allowances?.housing || 0,
+        transport: record.allowances?.transport || 0,
+        other: record.allowances?.other || 0,
+        otherLabel: record.allowances?.otherLabel || "Other"
+      },
       statutory: record.statutory || {
         epf: { employer: 0, employee: 0 },
         socso: { employer: 0, employee: 0 },
@@ -89,6 +172,7 @@ const AdminPayroll = () => {
     setEditingId(null);
     setEditForm({});
     setShowStatDetails(null);
+    setShowAllowanceDetails(null);
   };
 
   const saveEdit = async (id) => {
@@ -96,6 +180,7 @@ const AdminPayroll = () => {
       await updatePayrollRecord(id, editForm);
       setEditingId(null);
       setShowStatDetails(null);
+      setShowAllowanceDetails(null);
       fetchData();
     } catch (err) {
       alert("Update failed");
@@ -114,22 +199,28 @@ const AdminPayroll = () => {
 
   const openProfileEdit = (teacher) => {
     setSelectedTeacher(teacher);
-    setProfileForm(teacher.salaryProfile || {
-      baseSalary: 0,
-      overtimeRate: 0,
-      bankName: "",
-      bankAccountNo: "",
-      epfNo: "",
-      taxNo: "",
-      eisNo: "",
-      pcbNo: "",
-      defaultStatutory: {
+    const profile = teacher.salaryProfile || {};
+    setProfileForm({
+      baseSalary: profile.baseSalary || 0,
+      overtimeRate: profile.overtimeRate || 0,
+      bankName: profile.bankName || "",
+      bankAccountNo: profile.bankAccountNo || "",
+      epfNo: profile.epfNo || "",
+      taxNo: profile.taxNo || "",
+      eisNo: profile.eisNo || "",
+      pcbNo: profile.pcbNo || "",
+      defaultStatutory: profile.defaultStatutory || {
         epf: { employer: 0, employee: 0 },
         socso: { employer: 0, employee: 0 },
         eis: { employer: 0, employee: 0 },
         pcb: 0
       },
-      allowances: { housing: 0, transport: 0, other: 0 }
+      allowances: {
+        housing: profile.allowances?.housing || 0,
+        transport: profile.allowances?.transport || 0,
+        other: profile.allowances?.other || 0,
+        otherLabel: profile.allowances?.otherLabel || "Other"
+      }
     });
     setShowProfileModal(true);
   };
@@ -142,15 +233,26 @@ const AdminPayroll = () => {
       ...profileForm,
       defaultStatutory: {
         ...profileForm.defaultStatutory,
-        epf: {
-          employer: Math.ceil(base * 0.13), // 13% Employer
-          employee: Math.ceil(base * 0.11)  // 11% Employee
-        },
-        eis: {
-          employer: Number((base * 0.002).toFixed(2)), // 0.2% Employer
-          employee: Number((base * 0.002).toFixed(2))  // 0.2% Employee
-        },
-        // SOCSO and PCB remain manual for accuracy
+        epf: calculateEPF(base),
+        socso: getSocsoContribution(base),
+        eis: getEisContribution(base)
+        // PCB remains manual
+      }
+    });
+  };
+
+  const autoCalculateRecordStatutory = (baseSalary) => {
+    const base = Number(baseSalary || 0);
+    if (!base) return;
+
+    setEditForm({
+      ...editForm,
+      statutory: {
+        ...(editForm.statutory || {}),
+        epf: calculateEPF(base),
+        socso: getSocsoContribution(base),
+        eis: getEisContribution(base)
+        // PCB remains manual
       }
     });
   };
@@ -176,11 +278,11 @@ const AdminPayroll = () => {
     );
   }
 
-  const filteredRecords = records.filter(r => 
+  const filteredRecords = records.filter(r =>
     r.teacher?.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const filteredTeachers = teachers.filter(t => 
+  const filteredTeachers = teachers.filter(t =>
     t.name.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -193,13 +295,13 @@ const AdminPayroll = () => {
           <p className="text-gray-500 text-sm mt-1">Manage staff salaries and statutory contributions</p>
         </div>
         <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-xl w-fit">
-          <button 
+          <button
             onClick={() => setActiveTab("payroll")}
             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "payroll" ? "bg-white text-indigo-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
           >
             Payroll Run
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab("profiles")}
             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "profiles" ? "bg-white text-indigo-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
           >
@@ -262,7 +364,7 @@ const AdminPayroll = () => {
           <div className="flex flex-col lg:flex-row gap-4 items-center">
             <div className="flex-1 w-full relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input 
+              <input
                 type="text"
                 placeholder="Search teacher by name..."
                 value={search}
@@ -272,17 +374,17 @@ const AdminPayroll = () => {
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-2xl p-1 shadow-sm">
-                <select 
+                <select
                   value={month}
                   onChange={(e) => setMonth(Number(e.target.value))}
                   className="bg-transparent text-sm font-bold text-gray-700 px-3 py-1.5 outline-none cursor-pointer"
                 >
-                  {Array.from({length: 12}, (_, i) => (
-                    <option key={i+1} value={i+1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <option key={i + 1} value={i + 1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>
                   ))}
                 </select>
                 <div className="w-px h-4 bg-gray-200 mx-1" />
-                <select 
+                <select
                   value={year}
                   onChange={(e) => setYear(Number(e.target.value))}
                   className="bg-transparent text-sm font-bold text-gray-700 px-3 py-1.5 outline-none cursor-pointer"
@@ -290,7 +392,7 @@ const AdminPayroll = () => {
                   {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
               </div>
-              <button 
+              <button
                 onClick={handleGenerate}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-2xl text-sm font-bold transition-all shadow-md shadow-indigo-100 flex items-center gap-2"
               >
@@ -305,7 +407,7 @@ const AdminPayroll = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="bg-gray-50/50 text-gray-500 uppercase text-[10px] font-black tracking-widest border-b border-gray-100">
+                  <tr className="bg-blue-50 text-gray-500 uppercase text-[10px] font-black tracking-widest border-b border-gray-100">
                     <th className="px-6 py-4 w-10">#</th>
                     <th className="px-6 py-4">Staff Details</th>
                     <th className="px-6 py-4 text-center">Base</th>
@@ -333,7 +435,13 @@ const AdminPayroll = () => {
                     filteredRecords.map((r, idx) => {
                       const isEditing = editingId === r._id;
                       const isStatDetails = showStatDetails === r._id;
- 
+                      const isAllowanceDetails = showAllowanceDetails === r._id;
+                      const totalEditAllowance = isEditing ? (
+                        (editForm.allowances?.housing || 0) +
+                        (editForm.allowances?.transport || 0) +
+                        (editForm.allowances?.other || 0)
+                      ) : 0;
+
                       return (
                         <React.Fragment key={r._id}>
                           <tr className={`hover:bg-indigo-50/30 transition-colors ${isEditing ? "bg-indigo-50/50" : ""}`}>
@@ -358,13 +466,17 @@ const AdminPayroll = () => {
                             </td>
                             <td className="px-6 py-4 text-center">
                               {isEditing ? (
-                                <div className="space-y-1">
-                                  <input 
-                                    type="number" 
-                                    value={editForm.overtimeHours}
-                                    onChange={(e) => setEditForm({...editForm, overtimeHours: Number(e.target.value)})}
-                                    className="w-16 p-1 text-center border rounded-lg outline-none focus:ring-2 ring-indigo-200"
-                                  />
+                                <div className="flex flex-col items-center gap-1 min-w-[70px]">
+                                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Hours</label>
+                                  <div className="relative flex items-center">
+                                    <input
+                                      type="number"
+                                      value={editForm.overtimeHours}
+                                      onChange={(e) => setEditForm({ ...editForm, overtimeHours: Number(e.target.value) })}
+                                      className="w-20 pr-7 pl-2 py-1 text-right border border-gray-200 rounded-lg outline-none focus:ring-2 ring-indigo-200 text-xs font-bold"
+                                    />
+                                    <span className="absolute right-1.5 text-[9px] text-gray-400 font-bold pointer-events-none">hrs</span>
+                                  </div>
                                   <p className="text-[10px] text-gray-400">Rate: {r.overtimeRate}/hr</p>
                                 </div>
                               ) : (
@@ -375,32 +487,26 @@ const AdminPayroll = () => {
                               )}
                             </td>
                             <td className="px-6 py-4 text-center">
-                              {isEditing ? (
-                                <div className="flex flex-col gap-1 items-center">
-                                  <input 
-                                    type="number" 
-                                    placeholder="H"
-                                    value={editForm.allowances.housing}
-                                    onChange={(e) => setEditForm({...editForm, allowances: {...editForm.allowances, housing: Number(e.target.value)}})}
-                                    className="w-20 p-1 text-xs text-center border rounded-lg"
-                                  />
-                                  <input 
-                                    type="number" 
-                                    placeholder="T"
-                                    value={editForm.allowances.transport}
-                                    onChange={(e) => setEditForm({...editForm, allowances: {...editForm.allowances, transport: Number(e.target.value)}})}
-                                    className="w-20 p-1 text-xs text-center border rounded-lg"
-                                  />
-                                </div>
-                              ) : (
-                                <p className="font-bold text-emerald-600">+ RM {formatMoney(r.totalAllowances - r.bonus)}</p>
-                              )}
+                              <div className="flex flex-col items-center gap-1">
+                                <p className="font-bold text-emerald-600">
+                                  + RM {formatMoney(isEditing ? totalEditAllowance : (r.totalAllowances - r.bonus))}
+                                </p>
+                                {isEditing && (
+                                  <button
+                                    onClick={() => setShowAllowanceDetails(isAllowanceDetails ? null : r._id)}
+                                    className="text-[9px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full flex items-center gap-1"
+                                    type="button"
+                                  >
+                                    Manage {isAllowanceDetails ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />}
+                                  </button>
+                                )}
+                              </div>
                             </td>
                             <td className="px-6 py-4 text-center">
                               <div className="flex flex-col items-center gap-1">
                                 <p className="font-bold text-rose-600">- RM {formatMoney(r.totalStatutoryEmployee)}</p>
                                 {isEditing && (
-                                  <button 
+                                  <button
                                     onClick={() => setShowStatDetails(isStatDetails ? null : r._id)}
                                     className="text-[9px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full flex items-center gap-1"
                                   >
@@ -411,21 +517,31 @@ const AdminPayroll = () => {
                             </td>
                             <td className="px-6 py-4 text-center">
                               {isEditing ? (
-                                <div className="flex flex-col gap-1 items-center">
-                                  <input 
-                                    type="number" 
-                                    placeholder="Bonus"
-                                    value={editForm.bonus}
-                                    onChange={(e) => setEditForm({...editForm, bonus: Number(e.target.value)})}
-                                    className="w-20 p-1 text-xs text-center border rounded-lg bg-emerald-50"
-                                  />
-                                  <input 
-                                    type="number" 
-                                    placeholder="Deduc"
-                                    value={editForm.deductions}
-                                    onChange={(e) => setEditForm({...editForm, deductions: Number(e.target.value)})}
-                                    className="w-20 p-1 text-xs text-center border rounded-lg bg-rose-50"
-                                  />
+                                <div className="flex flex-col gap-1.5 min-w-[120px]">
+                                  <div className="flex items-center justify-between gap-1">
+                                    <span className="text-[9px] font-black text-emerald-600 uppercase tracking-wider">Bonus</span>
+                                    <div className="relative flex items-center w-20">
+                                      <span className="absolute left-1.5 text-[9px] text-emerald-600 font-bold pointer-events-none">RM</span>
+                                      <input
+                                        type="number"
+                                        value={editForm.bonus}
+                                        onChange={(e) => setEditForm({ ...editForm, bonus: Number(e.target.value) })}
+                                        className="w-full pl-6 pr-1.5 py-1 text-right border border-emerald-200 rounded-lg text-xs font-bold bg-emerald-50/50 text-emerald-700 outline-none focus:ring-2 ring-emerald-200"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center justify-between gap-1">
+                                    <span className="text-[9px] font-black text-rose-600 uppercase tracking-wider">Deduc</span>
+                                    <div className="relative flex items-center w-20">
+                                      <span className="absolute left-1.5 text-[9px] text-rose-600 font-bold pointer-events-none">RM</span>
+                                      <input
+                                        type="number"
+                                        value={editForm.deductions}
+                                        onChange={(e) => setEditForm({ ...editForm, deductions: Number(e.target.value) })}
+                                        className="w-full pl-6 pr-1.5 py-1 text-right border border-rose-200 rounded-lg text-xs font-bold bg-rose-50/50 text-rose-700 outline-none focus:ring-2 ring-rose-200"
+                                      />
+                                    </div>
+                                  </div>
                                 </div>
                               ) : (
                                 <div className="space-y-1">
@@ -441,9 +557,9 @@ const AdminPayroll = () => {
                             <td className="px-6 py-4 text-center">
                               <div className="flex flex-col items-center gap-1">
                                 {isEditing ? (
-                                  <select 
+                                  <select
                                     value={editForm.status}
-                                    onChange={(e) => setEditForm({...editForm, status: e.target.value})}
+                                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
                                     className="text-[10px] p-1 border rounded-md outline-none"
                                   >
                                     <option value="Draft">Draft</option>
@@ -451,11 +567,10 @@ const AdminPayroll = () => {
                                     <option value="Paid">Paid</option>
                                   </select>
                                 ) : (
-                                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
-                                    r.status === "Paid" ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
+                                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${r.status === "Paid" ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
                                     r.status === "Pending" ? "bg-amber-50 text-amber-700 border-amber-100" :
-                                    "bg-gray-50 text-gray-600 border-gray-100"
-                                  }`}>
+                                      "bg-gray-50 text-gray-600 border-gray-100"
+                                    }`}>
                                     {r.status}
                                   </span>
                                 )}
@@ -474,14 +589,16 @@ const AdminPayroll = () => {
                                   </>
                                 ) : (
                                   <>
-                                    <button 
-                                      onClick={() => startEditing(r)} 
-                                      className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
-                                      title="Edit Adjustments"
-                                    >
-                                      <Edit2 className="w-4 h-4" />
-                                    </button>
-                                    <button 
+                                    {r.status !== "Paid" && (
+                                      <button
+                                        onClick={() => startEditing(r)}
+                                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                                        title="Edit Adjustments"
+                                      >
+                                        <Edit2 className="w-4 h-4" />
+                                      </button>
+                                    )}
+                                    <button
                                       onClick={() => downloadPayslipPdf(r)}
                                       className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
                                       title="Download Payslip"
@@ -489,7 +606,7 @@ const AdminPayroll = () => {
                                       <Download className="w-4 h-4" />
                                     </button>
                                     {r.status !== "Paid" && (
-                                      <button 
+                                      <button
                                         onClick={() => handlePay(r._id)}
                                         className="px-3 py-1.5 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-wider rounded-xl hover:bg-indigo-700 transition-all shadow-sm shadow-indigo-100"
                                       >
@@ -501,44 +618,165 @@ const AdminPayroll = () => {
                               </div>
                             </td>
                           </tr>
-                          
+
+                          {/* Allowances Breakdown Edit Panel */}
+                          {isAllowanceDetails && isEditing && (
+                            <tr className="bg-emerald-50/25">
+                              <td colSpan="10" className="px-8 py-6 border-y border-emerald-100">
+                                <div className="max-w-4xl mx-auto space-y-6">
+                                  <div className="flex items-center gap-2 mb-4">
+                                    <TrendingUp className="w-5 h-5 text-emerald-600" />
+                                    <h4 className="text-xs font-black text-emerald-900 uppercase tracking-widest">Allowances Breakdown</h4>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    {/* Housing Allowance */}
+                                    <div className="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm space-y-3">
+                                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 pb-2">Housing Allowance</p>
+                                      <div>
+                                        <label className="block text-[9px] font-bold text-gray-500 mb-1 uppercase">Amount</label>
+                                        <div className="relative flex items-center">
+                                          <span className="absolute left-2.5 text-[10px] text-emerald-600 font-bold pointer-events-none">RM</span>
+                                          <input
+                                            type="number"
+                                            value={editForm.allowances?.housing || ""}
+                                            placeholder="0"
+                                            onChange={(e) => setEditForm({
+                                              ...editForm,
+                                              allowances: { ...editForm.allowances, housing: Number(e.target.value) }
+                                            })}
+                                            className="w-full pl-8 pr-2 py-2 bg-emerald-50/30 border border-emerald-100 rounded-lg text-xs font-bold text-emerald-700 outline-none focus:ring-2 ring-emerald-200"
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Transport Allowance */}
+                                    <div className="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm space-y-3">
+                                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 pb-2">Transport Allowance</p>
+                                      <div>
+                                        <label className="block text-[9px] font-bold text-gray-500 mb-1 uppercase">Amount</label>
+                                        <div className="relative flex items-center">
+                                          <span className="absolute left-2.5 text-[10px] text-emerald-600 font-bold pointer-events-none">RM</span>
+                                          <input
+                                            type="number"
+                                            value={editForm.allowances?.transport || ""}
+                                            placeholder="0"
+                                            onChange={(e) => setEditForm({
+                                              ...editForm,
+                                              allowances: { ...editForm.allowances, transport: Number(e.target.value) }
+                                            })}
+                                            className="w-full pl-8 pr-2 py-2 bg-emerald-50/30 border border-emerald-100 rounded-lg text-xs font-bold text-emerald-700 outline-none focus:ring-2 ring-emerald-200"
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Custom Allowance */}
+                                    <div className="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm space-y-3">
+                                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 pb-2">Custom Allowance</p>
+                                      <div>
+                                        <label className="block text-[9px] font-bold text-gray-500 mb-1 uppercase">Allowance Name</label>
+                                        <input
+                                          type="text"
+                                          value={editForm.allowances?.otherLabel || ""}
+                                          onChange={(e) => setEditForm({
+                                            ...editForm,
+                                            allowances: { ...editForm.allowances, otherLabel: e.target.value }
+                                          })}
+                                          placeholder="e.g. Special, Meal"
+                                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:ring-2 ring-emerald-200 mb-2 bg-white"
+                                        />
+                                        <label className="block text-[9px] font-bold text-gray-500 mb-1 uppercase">Amount</label>
+                                        <div className="relative flex items-center">
+                                          <span className="absolute left-2.5 text-[10px] text-emerald-600 font-bold pointer-events-none">RM</span>
+                                          <input
+                                            type="number"
+                                            value={editForm.allowances?.other || ""}
+                                            placeholder="0"
+                                            onChange={(e) => setEditForm({
+                                              ...editForm,
+                                              allowances: { ...editForm.allowances, other: Number(e.target.value) }
+                                            })}
+                                            className="w-full pl-8 pr-2 py-2 bg-emerald-50/30 border border-emerald-100 rounded-lg text-xs font-bold text-emerald-700 outline-none focus:ring-2 ring-emerald-200"
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex justify-end gap-3 pt-4 border-t border-emerald-100">
+                                    <div className="text-right">
+                                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Total Allowances</p>
+                                      <p className="text-sm font-black text-emerald-600">RM {formatMoney(totalEditAllowance)}</p>
+                                    </div>
+                                    <div className="w-px h-8 bg-emerald-100 mx-2" />
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowAllowanceDetails(null)}
+                                      className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-md shadow-emerald-100"
+                                    >
+                                      Close Breakdown
+                                    </button>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+
                           {/* Statutory Breakdown Edit Panel */}
                           {isStatDetails && isEditing && (
                             <tr className="bg-indigo-50/50">
                               <td colSpan="10" className="px-8 py-6 border-y border-indigo-100">
                                 <div className="max-w-4xl mx-auto space-y-6">
-                                  <div className="flex items-center gap-2 mb-4">
-                                    <ShieldCheck className="w-5 h-5 text-indigo-600" />
-                                    <h4 className="text-xs font-black text-indigo-900 uppercase tracking-widest">Statutory Contribution Breakdown</h4>
+                                  <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-2">
+                                      <ShieldCheck className="w-5 h-5 text-indigo-600" />
+                                      <h4 className="text-xs font-black text-indigo-900 uppercase tracking-widest">Statutory Contribution Breakdown</h4>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => autoCalculateRecordStatutory(r.baseSalary)}
+                                      className="text-[9px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-full transition-all flex items-center gap-1"
+                                      title="Calculate based on Base Salary"
+                                    >
+                                      Auto-Calculate
+                                    </button>
                                   </div>
-                                  
+
                                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                     {/* EPF */}
                                     <div className="bg-white p-4 rounded-2xl border border-indigo-100 shadow-sm space-y-3">
                                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 pb-2">KWSP (EPF)</p>
                                       <div>
                                         <label className="block text-[9px] font-bold text-gray-500 mb-1 uppercase">Employer</label>
-                                        <input 
-                                          type="number"
-                                          value={editForm.statutory.epf.employer}
-                                          onChange={(e) => setEditForm({
-                                            ...editForm, 
-                                            statutory: { ...editForm.statutory, epf: { ...editForm.statutory.epf, employer: Number(e.target.value) } }
-                                          })}
-                                          className="w-full p-2 bg-gray-50 border border-gray-100 rounded-lg text-xs font-bold"
-                                        />
+                                        <div className="relative flex items-center">
+                                          <span className="absolute left-2.5 text-[10px] text-gray-400 font-bold pointer-events-none">RM</span>
+                                          <input
+                                            type="number"
+                                            value={editForm.statutory.epf.employer}
+                                            onChange={(e) => setEditForm({
+                                              ...editForm,
+                                              statutory: { ...editForm.statutory, epf: { ...editForm.statutory.epf, employer: Number(e.target.value) } }
+                                            })}
+                                            className="w-full pl-8 pr-2 py-2 bg-gray-50 border border-gray-100 rounded-lg text-xs font-bold"
+                                          />
+                                        </div>
                                       </div>
                                       <div>
                                         <label className="block text-[9px] font-bold text-gray-500 mb-1 uppercase">Employee</label>
-                                        <input 
-                                          type="number"
-                                          value={editForm.statutory.epf.employee}
-                                          onChange={(e) => setEditForm({
-                                            ...editForm, 
-                                            statutory: { ...editForm.statutory, epf: { ...editForm.statutory.epf, employee: Number(e.target.value) } }
-                                          })}
-                                          className="w-full p-2 bg-rose-50 border border-rose-100 rounded-lg text-xs font-bold text-rose-700"
-                                        />
+                                        <div className="relative flex items-center">
+                                          <span className="absolute left-2.5 text-[10px] text-rose-400 font-bold pointer-events-none">RM</span>
+                                          <input
+                                            type="number"
+                                            value={editForm.statutory.epf.employee}
+                                            onChange={(e) => setEditForm({
+                                              ...editForm,
+                                              statutory: { ...editForm.statutory, epf: { ...editForm.statutory.epf, employee: Number(e.target.value) } }
+                                            })}
+                                            className="w-full pl-8 pr-2 py-2 bg-rose-50 border border-rose-100 rounded-lg text-xs font-bold text-rose-700"
+                                          />
+                                        </div>
                                       </div>
                                     </div>
 
@@ -547,27 +785,33 @@ const AdminPayroll = () => {
                                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 pb-2">PERKESO (SOCSO)</p>
                                       <div>
                                         <label className="block text-[9px] font-bold text-gray-500 mb-1 uppercase">Employer</label>
-                                        <input 
-                                          type="number"
-                                          value={editForm.statutory.socso.employer}
-                                          onChange={(e) => setEditForm({
-                                            ...editForm, 
-                                            statutory: { ...editForm.statutory, socso: { ...editForm.statutory.socso, employer: Number(e.target.value) } }
-                                          })}
-                                          className="w-full p-2 bg-gray-50 border border-gray-100 rounded-lg text-xs font-bold"
-                                        />
+                                        <div className="relative flex items-center">
+                                          <span className="absolute left-2.5 text-[10px] text-gray-400 font-bold pointer-events-none">RM</span>
+                                          <input
+                                            type="number"
+                                            value={editForm.statutory.socso.employer}
+                                            onChange={(e) => setEditForm({
+                                              ...editForm,
+                                              statutory: { ...editForm.statutory, socso: { ...editForm.statutory.socso, employer: Number(e.target.value) } }
+                                            })}
+                                            className="w-full pl-8 pr-2 py-2 bg-gray-50 border border-gray-100 rounded-lg text-xs font-bold"
+                                          />
+                                        </div>
                                       </div>
                                       <div>
                                         <label className="block text-[9px] font-bold text-gray-500 mb-1 uppercase">Employee</label>
-                                        <input 
-                                          type="number"
-                                          value={editForm.statutory.socso.employee}
-                                          onChange={(e) => setEditForm({
-                                            ...editForm, 
-                                            statutory: { ...editForm.statutory, socso: { ...editForm.statutory.socso, employee: Number(e.target.value) } }
-                                          })}
-                                          className="w-full p-2 bg-rose-50 border border-rose-100 rounded-lg text-xs font-bold text-rose-700"
-                                        />
+                                        <div className="relative flex items-center">
+                                          <span className="absolute left-2.5 text-[10px] text-rose-400 font-bold pointer-events-none">RM</span>
+                                          <input
+                                            type="number"
+                                            value={editForm.statutory.socso.employee}
+                                            onChange={(e) => setEditForm({
+                                              ...editForm,
+                                              statutory: { ...editForm.statutory, socso: { ...editForm.statutory.socso, employee: Number(e.target.value) } }
+                                            })}
+                                            className="w-full pl-8 pr-2 py-2 bg-rose-50 border border-rose-100 rounded-lg text-xs font-bold text-rose-700"
+                                          />
+                                        </div>
                                       </div>
                                     </div>
 
@@ -576,27 +820,33 @@ const AdminPayroll = () => {
                                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 pb-2">SIP (EIS)</p>
                                       <div>
                                         <label className="block text-[9px] font-bold text-gray-500 mb-1 uppercase">Employer</label>
-                                        <input 
-                                          type="number"
-                                          value={editForm.statutory.eis.employer}
-                                          onChange={(e) => setEditForm({
-                                            ...editForm, 
-                                            statutory: { ...editForm.statutory, eis: { ...editForm.statutory.eis, employer: Number(e.target.value) } }
-                                          })}
-                                          className="w-full p-2 bg-gray-50 border border-gray-100 rounded-lg text-xs font-bold"
-                                        />
+                                        <div className="relative flex items-center">
+                                          <span className="absolute left-2.5 text-[10px] text-gray-400 font-bold pointer-events-none">RM</span>
+                                          <input
+                                            type="number"
+                                            value={editForm.statutory.eis.employer}
+                                            onChange={(e) => setEditForm({
+                                              ...editForm,
+                                              statutory: { ...editForm.statutory, eis: { ...editForm.statutory.eis, employer: Number(e.target.value) } }
+                                            })}
+                                            className="w-full pl-8 pr-2 py-2 bg-gray-50 border border-gray-100 rounded-lg text-xs font-bold"
+                                          />
+                                        </div>
                                       </div>
                                       <div>
                                         <label className="block text-[9px] font-bold text-gray-500 mb-1 uppercase">Employee</label>
-                                        <input 
-                                          type="number"
-                                          value={editForm.statutory.eis.employee}
-                                          onChange={(e) => setEditForm({
-                                            ...editForm, 
-                                            statutory: { ...editForm.statutory, eis: { ...editForm.statutory.eis, employee: Number(e.target.value) } }
-                                          })}
-                                          className="w-full p-2 bg-rose-50 border border-rose-100 rounded-lg text-xs font-bold text-rose-700"
-                                        />
+                                        <div className="relative flex items-center">
+                                          <span className="absolute left-2.5 text-[10px] text-rose-400 font-bold pointer-events-none">RM</span>
+                                          <input
+                                            type="number"
+                                            value={editForm.statutory.eis.employee}
+                                            onChange={(e) => setEditForm({
+                                              ...editForm,
+                                              statutory: { ...editForm.statutory, eis: { ...editForm.statutory.eis, employee: Number(e.target.value) } }
+                                            })}
+                                            className="w-full pl-8 pr-2 py-2 bg-rose-50 border border-rose-100 rounded-lg text-xs font-bold text-rose-700"
+                                          />
+                                        </div>
                                       </div>
                                     </div>
 
@@ -605,19 +855,22 @@ const AdminPayroll = () => {
                                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 pb-2">PCB (Tax)</p>
                                       <div>
                                         <label className="block text-[9px] font-bold text-gray-500 mb-1 uppercase">Employee Tax</label>
-                                        <input 
-                                          type="number"
-                                          value={editForm.statutory.pcb}
-                                          onChange={(e) => setEditForm({
-                                            ...editForm, 
-                                            statutory: { ...editForm.statutory, pcb: Number(e.target.value) }
-                                          })}
-                                          className="w-full p-2 bg-rose-50 border border-rose-100 rounded-lg text-xs font-bold text-rose-700 h-[88px]"
-                                        />
+                                        <div className="relative flex items-center">
+                                          <span className="absolute left-2.5 text-[10px] text-rose-400 font-bold pointer-events-none">RM</span>
+                                          <input
+                                            type="number"
+                                            value={editForm.statutory.pcb}
+                                            onChange={(e) => setEditForm({
+                                              ...editForm,
+                                              statutory: { ...editForm.statutory, pcb: Number(e.target.value) }
+                                            })}
+                                            className="w-full pl-8 pr-2 py-2 bg-rose-50 border border-rose-100 rounded-lg text-xs font-bold text-rose-700 h-[88px]"
+                                          />
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
-                                  
+
                                   <div className="flex justify-end gap-3 pt-4 border-t border-indigo-100">
                                     <div className="text-right">
                                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Total EE Contribution</p>
@@ -629,7 +882,7 @@ const AdminPayroll = () => {
                                       )}</p>
                                     </div>
                                     <div className="w-px h-8 bg-indigo-100 mx-2" />
-                                    <button 
+                                    <button
                                       onClick={() => setShowStatDetails(null)}
                                       className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
                                     >
@@ -654,7 +907,7 @@ const AdminPayroll = () => {
         <div className="space-y-4">
           <div className="bg-white p-4 rounded-2xl border-2 border-gray-300 shadow-sm flex items-center relative">
             <Search className="absolute left-7 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input 
+            <input
               type="text"
               placeholder="Search teacher..."
               value={search}
@@ -703,7 +956,7 @@ const AdminPayroll = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button 
+                          <button
                             onClick={() => openProfileEdit(t)}
                             className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
                             title="Configure Profile"
@@ -744,125 +997,181 @@ const AdminPayroll = () => {
                   </h4>
                   <div className="space-y-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
                     <div>
-                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Base Salary (RM)</label>
-                      <input 
-                        type="number"
-                        value={profileForm.baseSalary}
-                        onChange={(e) => setProfileForm({...profileForm, baseSalary: Number(e.target.value)})}
-                        className="w-full p-3 bg-white border border-gray-200 rounded-xl focus:ring-2 ring-indigo-200 outline-none font-bold"
-                      />
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Base Salary</label>
+                      <div className="relative flex items-center">
+                        <span className="absolute left-3.5 text-gray-400 font-bold text-sm pointer-events-none">RM</span>
+                        <input
+                          type="number"
+                          value={profileForm.baseSalary}
+                          onChange={(e) => setProfileForm({ ...profileForm, baseSalary: Number(e.target.value) })}
+                          className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 ring-indigo-200 outline-none font-bold text-sm"
+                        />
+                      </div>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Overtime Rate (RM/hr)</label>
-                      <input 
-                        type="number"
-                        value={profileForm.overtimeRate}
-                        onChange={(e) => setProfileForm({...profileForm, overtimeRate: Number(e.target.value)})}
-                        className="w-full p-3 bg-white border border-gray-200 rounded-xl focus:ring-2 ring-indigo-200 outline-none font-bold"
-                      />
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Overtime Rate</label>
+                      <div className="relative flex items-center">
+                        <span className="absolute left-3.5 text-gray-400 font-bold text-sm pointer-events-none">RM</span>
+                        <input
+                          type="number"
+                          value={profileForm.overtimeRate}
+                          onChange={(e) => setProfileForm({ ...profileForm, overtimeRate: Number(e.target.value) })}
+                          className="w-full pl-10 pr-12 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 ring-indigo-200 outline-none font-bold text-sm"
+                        />
+                        <span className="absolute right-3.5 text-gray-400 font-bold text-xs pointer-events-none">/ hr</span>
+                      </div>
                     </div>
                   </div>
 
                   <h4 className="text-xs font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2 pt-4">
                     <TrendingUp className="w-4 h-4" /> Recurring Allowances
                   </h4>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Housing</label>
-                      <input 
-                        type="number"
-                        value={profileForm.allowances?.housing}
-                        onChange={(e) => setProfileForm({...profileForm, allowances: {...profileForm.allowances, housing: Number(e.target.value)}})}
-                        className="w-full p-3 border border-gray-200 rounded-xl text-sm"
-                      />
+                      <div className="relative flex items-center">
+                        <span className="absolute left-3.5 text-gray-400 font-bold text-sm pointer-events-none">RM</span>
+                        <input
+                          type="number"
+                          value={profileForm.allowances?.housing || ""}
+                          placeholder="0"
+                          onChange={(e) => setProfileForm({ ...profileForm, allowances: { ...profileForm.allowances, housing: Number(e.target.value) } })}
+                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 ring-indigo-200"
+                        />
+                      </div>
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Transport</label>
-                      <input 
-                        type="number"
-                        value={profileForm.allowances?.transport}
-                        onChange={(e) => setProfileForm({...profileForm, allowances: {...profileForm.allowances, transport: Number(e.target.value)}})}
-                        className="w-full p-3 border border-gray-200 rounded-xl text-sm"
+                      <div className="relative flex items-center">
+                        <span className="absolute left-3.5 text-gray-400 font-bold text-sm pointer-events-none">RM</span>
+                        <input
+                          type="number"
+                          value={profileForm.allowances?.transport || ""}
+                          placeholder="0"
+                          onChange={(e) => setProfileForm({ ...profileForm, allowances: { ...profileForm.allowances, transport: Number(e.target.value) } })}
+                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 ring-indigo-200"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2 bg-emerald-50/20 p-3 rounded-2xl border border-emerald-100/50">
+                      <label className="block text-[10px] font-black text-emerald-700 uppercase tracking-widest">Custom Allowance</label>
+                      <input
+                        type="text"
+                        placeholder="Allowance Name"
+                        value={profileForm.allowances?.otherLabel || ""}
+                        onChange={(e) => setProfileForm({ ...profileForm, allowances: { ...profileForm.allowances, otherLabel: e.target.value } })}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:ring-2 ring-indigo-200 bg-white"
                       />
+                      <div className="relative flex items-center">
+                        <span className="absolute left-2.5 text-gray-400 font-bold text-xs pointer-events-none">RM</span>
+                        <input
+                          type="number"
+                          placeholder="0"
+                          value={profileForm.allowances?.other || ""}
+                          onChange={(e) => setProfileForm({ ...profileForm, allowances: { ...profileForm.allowances, other: Number(e.target.value) } })}
+                          className="w-full pl-8 pr-2 py-1.5 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:ring-2 ring-indigo-200 bg-white"
+                        />
+                      </div>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between pt-4">
                     <h4 className="text-xs font-black text-rose-600 uppercase tracking-widest flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4" /> Default Statutory (RM)
+                      <ShieldCheck className="w-4 h-4" /> Default Statutory
                     </h4>
-                    <button 
+                    <button
                       onClick={autoCalculateStatutory}
                       className="text-[9px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-full transition-all flex items-center gap-1"
                       title="Calculate based on Base Salary"
                     >
-                      Auto-Calculate EPF & EIS
+                      Auto-Calculate Statutory (EPF, SOCSO, EIS)
                     </button>
                   </div>
                   <div className="space-y-4 bg-rose-50/30 p-5 rounded-2xl border border-rose-100/50">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-[9px] font-bold text-gray-500 mb-1 uppercase">EPF (Employer)</label>
-                        <input 
-                          type="number" 
-                          value={profileForm.defaultStatutory?.epf?.employer} 
-                          onChange={(e) => setProfileForm({...profileForm, defaultStatutory: {...profileForm.defaultStatutory, epf: {...profileForm.defaultStatutory.epf, employer: Number(e.target.value)}}})} 
-                          className="w-full p-2 bg-white border border-gray-100 rounded-lg text-xs font-bold" 
-                        />
+                        <div className="relative flex items-center">
+                          <span className="absolute left-2.5 text-[10px] text-gray-400 font-bold pointer-events-none">RM</span>
+                          <input
+                            type="number"
+                            value={profileForm.defaultStatutory?.epf?.employer}
+                            onChange={(e) => setProfileForm({ ...profileForm, defaultStatutory: { ...profileForm.defaultStatutory, epf: { ...profileForm.defaultStatutory.epf, employer: Number(e.target.value) } } })}
+                            className="w-full pl-8 pr-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-bold outline-none focus:ring-2 ring-indigo-200"
+                          />
+                        </div>
                       </div>
                       <div>
                         <label className="block text-[9px] font-bold text-gray-500 mb-1 uppercase">EPF (Employee)</label>
-                        <input 
-                          type="number" 
-                          value={profileForm.defaultStatutory?.epf?.employee} 
-                          onChange={(e) => setProfileForm({...profileForm, defaultStatutory: {...profileForm.defaultStatutory, epf: {...profileForm.defaultStatutory.epf, employee: Number(e.target.value)}}})} 
-                          className="w-full p-2 bg-white border border-gray-100 rounded-lg text-xs font-bold" 
-                        />
+                        <div className="relative flex items-center">
+                          <span className="absolute left-2.5 text-[10px] text-gray-400 font-bold pointer-events-none">RM</span>
+                          <input
+                            type="number"
+                            value={profileForm.defaultStatutory?.epf?.employee}
+                            onChange={(e) => setProfileForm({ ...profileForm, defaultStatutory: { ...profileForm.defaultStatutory, epf: { ...profileForm.defaultStatutory.epf, employee: Number(e.target.value) } } })}
+                            className="w-full pl-8 pr-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-bold outline-none focus:ring-2 ring-indigo-200"
+                          />
+                        </div>
                       </div>
                       <div>
                         <label className="block text-[9px] font-bold text-gray-500 mb-1 uppercase">SOCSO (Emplr)</label>
-                        <input 
-                          type="number" 
-                          value={profileForm.defaultStatutory?.socso?.employer} 
-                          onChange={(e) => setProfileForm({...profileForm, defaultStatutory: {...profileForm.defaultStatutory, socso: {...profileForm.defaultStatutory.socso, employer: Number(e.target.value)}}})} 
-                          className="w-full p-2 bg-white border border-gray-100 rounded-lg text-xs font-bold" 
-                        />
+                        <div className="relative flex items-center">
+                          <span className="absolute left-2.5 text-[10px] text-gray-400 font-bold pointer-events-none">RM</span>
+                          <input
+                            type="number"
+                            value={profileForm.defaultStatutory?.socso?.employer}
+                            onChange={(e) => setProfileForm({ ...profileForm, defaultStatutory: { ...profileForm.defaultStatutory, socso: { ...profileForm.defaultStatutory.socso, employer: Number(e.target.value) } } })}
+                            className="w-full pl-8 pr-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-bold outline-none focus:ring-2 ring-indigo-200"
+                          />
+                        </div>
                       </div>
                       <div>
                         <label className="block text-[9px] font-bold text-gray-500 mb-1 uppercase">SOCSO (EE)</label>
-                        <input 
-                          type="number" 
-                          value={profileForm.defaultStatutory?.socso?.employee} 
-                          onChange={(e) => setProfileForm({...profileForm, defaultStatutory: {...profileForm.defaultStatutory, socso: {...profileForm.defaultStatutory.socso, employee: Number(e.target.value)}}})} 
-                          className="w-full p-2 bg-white border border-gray-100 rounded-lg text-xs font-bold" 
-                        />
+                        <div className="relative flex items-center">
+                          <span className="absolute left-2.5 text-[10px] text-gray-400 font-bold pointer-events-none">RM</span>
+                          <input
+                            type="number"
+                            value={profileForm.defaultStatutory?.socso?.employee}
+                            onChange={(e) => setProfileForm({ ...profileForm, defaultStatutory: { ...profileForm.defaultStatutory, socso: { ...profileForm.defaultStatutory.socso, employee: Number(e.target.value) } } })}
+                            className="w-full pl-8 pr-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-bold outline-none focus:ring-2 ring-indigo-200"
+                          />
+                        </div>
                       </div>
                       <div>
                         <label className="block text-[9px] font-bold text-gray-500 mb-1 uppercase">EIS (Emplr)</label>
-                        <input 
-                          type="number" 
-                          value={profileForm.defaultStatutory?.eis?.employer} 
-                          onChange={(e) => setProfileForm({...profileForm, defaultStatutory: {...profileForm.defaultStatutory, eis: {...profileForm.defaultStatutory.eis, employer: Number(e.target.value)}}})} 
-                          className="w-full p-2 bg-white border border-gray-100 rounded-lg text-xs font-bold" 
-                        />
+                        <div className="relative flex items-center">
+                          <span className="absolute left-2.5 text-[10px] text-gray-400 font-bold pointer-events-none">RM</span>
+                          <input
+                            type="number"
+                            value={profileForm.defaultStatutory?.eis?.employer}
+                            onChange={(e) => setProfileForm({ ...profileForm, defaultStatutory: { ...profileForm.defaultStatutory, eis: { ...profileForm.defaultStatutory.eis, employer: Number(e.target.value) } } })}
+                            className="w-full pl-8 pr-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-bold outline-none focus:ring-2 ring-indigo-200"
+                          />
+                        </div>
                       </div>
                       <div>
                         <label className="block text-[9px] font-bold text-gray-500 mb-1 uppercase">EIS (EE)</label>
-                        <input 
-                          type="number" 
-                          value={profileForm.defaultStatutory?.eis?.employee} 
-                          onChange={(e) => setProfileForm({...profileForm, defaultStatutory: {...profileForm.defaultStatutory, eis: {...profileForm.defaultStatutory.eis, employee: Number(e.target.value)}}})} 
-                          className="w-full p-2 bg-white border border-gray-100 rounded-lg text-xs font-bold" 
-                        />
+                        <div className="relative flex items-center">
+                          <span className="absolute left-2.5 text-[10px] text-gray-400 font-bold pointer-events-none">RM</span>
+                          <input
+                            type="number"
+                            value={profileForm.defaultStatutory?.eis?.employee}
+                            onChange={(e) => setProfileForm({ ...profileForm, defaultStatutory: { ...profileForm.defaultStatutory, eis: { ...profileForm.defaultStatutory.eis, employee: Number(e.target.value) } } })}
+                            className="w-full pl-8 pr-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-bold outline-none focus:ring-2 ring-indigo-200"
+                          />
+                        </div>
                       </div>
                       <div className="col-span-2">
                         <label className="block text-[9px] font-bold text-gray-500 mb-1 uppercase">PCB (Employee Tax)</label>
-                        <input 
-                          type="number" 
-                          value={profileForm.defaultStatutory?.pcb} 
-                          onChange={(e) => setProfileForm({...profileForm, defaultStatutory: {...profileForm.defaultStatutory, pcb: Number(e.target.value)}})} 
-                          className="w-full p-2 bg-white border border-gray-100 rounded-lg text-xs font-bold" 
-                        />
+                        <div className="relative flex items-center">
+                          <span className="absolute left-2.5 text-[10px] text-gray-400 font-bold pointer-events-none">RM</span>
+                          <input
+                            type="number"
+                            value={profileForm.defaultStatutory?.pcb}
+                            onChange={(e) => setProfileForm({ ...profileForm, defaultStatutory: { ...profileForm.defaultStatutory, pcb: Number(e.target.value) } })}
+                            className="w-full pl-8 pr-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-bold outline-none focus:ring-2 ring-indigo-200"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -876,58 +1185,58 @@ const AdminPayroll = () => {
                   <div className="space-y-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
                     <div>
                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">EPF Number</label>
-                      <input 
+                      <input
                         type="text"
                         value={profileForm.epfNo}
-                        onChange={(e) => setProfileForm({...profileForm, epfNo: e.target.value})}
+                        onChange={(e) => setProfileForm({ ...profileForm, epfNo: e.target.value })}
                         className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm font-medium"
                       />
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Tax Number</label>
-                      <input 
+                      <input
                         type="text"
                         value={profileForm.taxNo}
-                        onChange={(e) => setProfileForm({...profileForm, taxNo: e.target.value})}
+                        onChange={(e) => setProfileForm({ ...profileForm, taxNo: e.target.value })}
                         className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm font-medium"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">SIP (EIS)</label>
-                        <input 
+                        <input
                           type="text"
                           value={profileForm.eisNo}
-                          onChange={(e) => setProfileForm({...profileForm, eisNo: e.target.value})}
+                          onChange={(e) => setProfileForm({ ...profileForm, eisNo: e.target.value })}
                           className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm font-medium"
                         />
                       </div>
                       <div>
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">PCB (Tax)</label>
-                        <input 
+                        <input
                           type="text"
                           value={profileForm.pcbNo}
-                          onChange={(e) => setProfileForm({...profileForm, pcbNo: e.target.value})}
+                          onChange={(e) => setProfileForm({ ...profileForm, pcbNo: e.target.value })}
                           className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm font-medium"
                         />
                       </div>
                     </div>
                     <div className="pt-2 border-t border-gray-200">
                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Bank Name</label>
-                      <input 
+                      <input
                         type="text"
                         placeholder="e.g. Maybank"
                         value={profileForm.bankName}
-                        onChange={(e) => setProfileForm({...profileForm, bankName: e.target.value})}
+                        onChange={(e) => setProfileForm({ ...profileForm, bankName: e.target.value })}
                         className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm font-medium"
                       />
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Account Number</label>
-                      <input 
+                      <input
                         type="text"
                         value={profileForm.bankAccountNo}
-                        onChange={(e) => setProfileForm({...profileForm, bankAccountNo: e.target.value})}
+                        onChange={(e) => setProfileForm({ ...profileForm, bankAccountNo: e.target.value })}
                         className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm font-medium"
                       />
                     </div>
@@ -936,13 +1245,13 @@ const AdminPayroll = () => {
               </div>
 
               <div className="flex gap-4 pt-8 mt-8 border-t border-gray-100">
-                <button 
+                <button
                   onClick={() => setShowProfileModal(false)}
                   className="flex-1 px-6 py-4 border border-gray-200 text-gray-600 rounded-2xl font-bold hover:bg-gray-50 transition-all uppercase text-xs tracking-widest"
                 >
                   Discard Changes
                 </button>
-                <button 
+                <button
                   onClick={saveProfile}
                   className="flex-1 px-6 py-4 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all flex items-center justify-center gap-2 uppercase text-xs tracking-widest"
                 >

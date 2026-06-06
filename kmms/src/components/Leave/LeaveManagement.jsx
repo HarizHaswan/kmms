@@ -221,21 +221,19 @@ const LeaveManagement = () => {
       <div className="flex gap-2 border-b border-gray-200">
         <button
           onClick={() => setLeaveView("current")}
-          className={`px-4 py-2 text-sm font-medium border-b-2 ${
-            leaveView === "current"
-              ? "border-primary text-primary"
-              : "border-transparent text-gray-500 hover:text-gray-700"
-          }`}
+          className={`px-4 py-2 text-sm font-medium border-b-2 ${leaveView === "current"
+            ? "border-primary text-primary"
+            : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
         >
           Today / Ongoing
         </button>
         <button
           onClick={() => setLeaveView("history")}
-          className={`px-4 py-2 text-sm font-medium border-b-2 ${
-            leaveView === "history"
-              ? "border-primary text-primary"
-              : "border-transparent text-gray-500 hover:text-gray-700"
-          }`}
+          className={`px-4 py-2 text-sm font-medium border-b-2 ${leaveView === "history"
+            ? "border-primary text-primary"
+            : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
         >
           History
         </button>
@@ -322,7 +320,7 @@ const LeaveManagement = () => {
       <div className="bg-white rounded-xl shadow-sm border-2 border-gray-300 overflow-hidden">
         <div>
           <table className="w-full table-fixed text-left text-sm text-gray-600">
-            <thead className="bg-gray-50/50 text-gray-500 uppercase text-[10px] font-black tracking-widest border-b border-gray-100">
+            <thead className="bg-blue-50 text-gray-500 uppercase text-[10px] font-black tracking-widest border-b border-gray-100">
               <tr>
                 <th className="px-6 py-5 w-16">#</th>
                 <th className="px-6 py-5">Teacher</th>
@@ -410,11 +408,10 @@ const LeaveManagement = () => {
                           <div className="flex justify-end gap-2">
                             <button
                               onClick={() => toggleExpandLeave(req._id)}
-                              className={`p-2 rounded-xl transition-all ${
-                                expandedLeaveId === req._id
-                                  ? "bg-indigo-100 text-indigo-700"
-                                  : "hover:bg-indigo-50 hover:text-indigo-600 text-gray-400"
-                              }`}
+                              className={`p-2 rounded-xl transition-all ${expandedLeaveId === req._id
+                                ? "bg-indigo-100 text-indigo-700"
+                                : "hover:bg-indigo-50 hover:text-indigo-600 text-gray-400"
+                                }`}
                               title={expandedLeaveId === req._id ? "Hide Details" : "View All Details"}
                             >
                               {expandedLeaveId === req._id ? (
@@ -495,7 +492,7 @@ const LeaveManagement = () => {
                                   </div>
                                 </div>
                               </div>
-                              
+
                               {/* Right Box: Admin Review & Document */}
                               <div className="space-y-4 bg-white p-6 rounded-2xl border-2 border-gray-300 shadow-sm relative overflow-hidden flex flex-col justify-between">
                                 <div className="space-y-4">
@@ -529,7 +526,7 @@ const LeaveManagement = () => {
                                     )}
                                   </div>
                                 </div>
-                                
+
                                 <div className="pt-4 border-t border-gray-50 flex items-center justify-between">
                                   <div>
                                     <span className="text-gray-400 block text-[9px] uppercase tracking-wider mb-0.5 font-bold">Supporting Document</span>

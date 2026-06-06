@@ -158,11 +158,12 @@ exports.getMonthlyStats = async (req, res, next) => {
     const attendanceList = await Attendance.find({
       classId: classId,
       date: { $regex: `^${month}` } 
-    });
+    }).populate("records.studentId", "name");
 
     let totalPresent = 0;
     let totalAbsent = 0;
     let totalRecords = 0;
+    const absentees = [];
 
     attendanceList.forEach((day) => {
       day.records.forEach((student) => {
@@ -171,6 +172,12 @@ exports.getMonthlyStats = async (req, res, next) => {
           totalPresent++;
         } else {
           totalAbsent++;
+          absentees.push({
+            studentId: student.studentId?._id || student.studentId,
+            studentName: student.studentId?.name || "Unknown Student",
+            date: day.date,
+            reason: student.reason || ""
+          });
         }
       });
     });
@@ -184,7 +191,8 @@ exports.getMonthlyStats = async (req, res, next) => {
       totalRecords,
       totalPresent,
       totalAbsent,
-      percentage
+      percentage,
+      absentees
     });
 
   } catch (err) {
