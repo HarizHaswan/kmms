@@ -7,6 +7,8 @@ const connectDB = require("./config/db");
 const { notFound, errorHandler } = require("./config/middleware/errorHandler");
 const http = require("http");
 const { startFeeAutomationScheduler } = require("./config/services/feeAutomationService");
+const { startAttendanceAutoSaveScheduler } = require("./config/services/attendanceAutomationService");
+
 
 const app = express();
 
@@ -102,6 +104,8 @@ initIO(server); // no need to store io globally here
 const PORT = process.env.PORT || 5000;
 
 startFeeAutomationScheduler();
+startAttendanceAutoSaveScheduler();
+
 
 server.listen(PORT, () => {
   console.log(`KMMS API + Socket.IO running on port ${PORT}`);
