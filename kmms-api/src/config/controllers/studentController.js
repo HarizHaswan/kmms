@@ -68,10 +68,29 @@ exports.createStudent = async (req, res, next) => {
       }
     }
 
-    // Resolve parentName before creating student
-    const resolvedParentName = existingParentUser 
-      ? existingParentUser.name 
-      : (parentName && parentName.trim() ? parentName.trim() : "Unknown Parent");
+    // Resolve parent details before creating student
+    let resolvedParentName = parentName;
+    let resolvedParentIcNumber = parentIcNumber || "";
+    let resolvedParentPhoneNumber = parentPhoneNumber || "";
+    let resolvedHomeAddress = homeAddress || "";
+
+    if (existingParentUser) {
+      resolvedParentName = existingParentUser.name;
+      // Look up another child of this parent to copy details
+      const otherChild = await Student.findOne({ parentId: existingParentUser._id });
+      if (otherChild) {
+        resolvedParentIcNumber = otherChild.parentIcNumber || "";
+        resolvedParentPhoneNumber = otherChild.parentPhoneNumber || "";
+        resolvedHomeAddress = otherChild.homeAddress || "";
+        if (otherChild.parentName) {
+          resolvedParentName = otherChild.parentName;
+        }
+      } else {
+        // Fallback to parent user fields if no other children found
+        resolvedParentPhoneNumber = existingParentUser.phone || "";
+        resolvedParentIcNumber = existingParentUser.icNumber || "";
+      }
+    }
 
     // 4. Create Student
     const newStudent = await Student.create({
@@ -82,9 +101,9 @@ exports.createStudent = async (req, res, next) => {
       registrationDate, 
       classId,
       parentName: resolvedParentName, 
-      parentIcNumber: parentIcNumber || "",
-      parentPhoneNumber: parentPhoneNumber || "",
-      homeAddress: homeAddress || "",
+      parentIcNumber: resolvedParentIcNumber,
+      parentPhoneNumber: resolvedParentPhoneNumber,
+      homeAddress: resolvedHomeAddress,
       status: status || "active",
       parentId: existingParentUser ? existingParentUser._id : undefined
     });

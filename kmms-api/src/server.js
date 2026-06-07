@@ -40,6 +40,49 @@ connectDB().then(() => {
     }
   };
   syncExistingParentsPhone();
+
+  // One-time self-healing migration to copy parent details for children of existing parents who have empty parent fields
+  const healStudentParentDetails = async () => {
+    try {
+      const Student = require("./config/models/Student");
+      const studentsToHeal = await Student.find({
+        parentId: { $exists: true, $ne: null },
+        $or: [
+          { parentName: "" },
+          { parentName: null },
+          { parentPhoneNumber: "" },
+          { parentPhoneNumber: null }
+        ]
+      });
+
+      let healedCount = 0;
+      for (const student of studentsToHeal) {
+        // Find another student with the same parentId who has parentDetails
+        const sibling = await Student.findOne({
+          parentId: student.parentId,
+          _id: { $ne: student._id },
+          parentName: { $exists: true, $ne: "" },
+          parentPhoneNumber: { $exists: true, $ne: "" }
+        });
+
+        if (sibling) {
+          student.parentName = sibling.parentName;
+          student.parentIcNumber = sibling.parentIcNumber || student.parentIcNumber || "";
+          student.parentPhoneNumber = sibling.parentPhoneNumber || student.parentPhoneNumber || "";
+          student.homeAddress = sibling.homeAddress || student.homeAddress || "";
+          await student.save();
+          healedCount++;
+        }
+      }
+
+      if (healedCount > 0) {
+        console.log(`[Migration] Successfully healed parent details for ${healedCount} existing children.`);
+      }
+    } catch (err) {
+      console.error("[Migration] Error healing student parent details:", err);
+    }
+  };
+  healStudentParentDetails();
 });
 
 // Middlewares
