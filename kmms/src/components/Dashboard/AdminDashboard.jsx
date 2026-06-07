@@ -23,6 +23,7 @@ import LiveDateTime from "../Common/LiveDateTime";
 
 export default function AdminDashboard({ setActiveTab }) {
   const [totalStudents, setTotalStudents] = useState(0);
+  const [newThisMonth, setNewThisMonth] = useState(0);
   const [activeTeachers, setActiveTeachers] = useState(0);
   const [pendingEnrollments, setPendingEnrollments] = useState([]);
   const [attendanceToday, setAttendanceToday] = useState({
@@ -53,6 +54,17 @@ export default function AdminDashboard({ setActiveTab }) {
       );
       setTotalStudents(activeStudents.length);
       setPendingEnrollments(pendingStudents);
+
+      // Calculate students registered in the current calendar month
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
+      const newStudentsCount = studentsData.filter(s => {
+        if (!s.registrationDate) return false;
+        const regDate = new Date(s.registrationDate);
+        return regDate.getFullYear() === currentYear && regDate.getMonth() === currentMonth;
+      }).length;
+      setNewThisMonth(newStudentsCount);
 
       const teachersData = await getTeachers();
       const activeTeachersList = teachersData.filter(t =>
@@ -180,7 +192,7 @@ export default function AdminDashboard({ setActiveTab }) {
           icon={Users}
           color="from-primary to-primary-dark"
           onClick={() => setActiveTab("users")}
-          trend="+4 new this month"
+          trend={`+${newThisMonth} new this month`}
         />
         <StatCard
           title="Teachers"
