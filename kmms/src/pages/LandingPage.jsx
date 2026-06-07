@@ -289,9 +289,9 @@ const LandingPage = () => {
           <div>
             <h5 className="text-white font-bold mb-4">Contact</h5>
             <ul className="space-y-2 text-sm">
-              <li>Email: info@smartkindy.edu</li>
-              <li>Phone: +60 3-1234 5678</li>
-              <li>Address: 123 Jalan Edukasi, Kuala Lumpur, Malaysia</li>
+              <li>Email: admin@smartkindy.my</li>
+              <li>Phone: +60 351662046</li>
+              <li>Address: No. 1, Lorong kerongsang 10C, bandar Puteri, 41200, Klang, Malaysia</li>
             </ul>
           </div>
         </div>
