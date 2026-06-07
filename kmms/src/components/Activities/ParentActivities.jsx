@@ -67,6 +67,7 @@ const CARD_COLORS = [
 
 // ─── Component ────────────────────────────────────────────────────────────────
 const ParentActivities = ({ user }) => {
+  const [children, setChildren] = useState([]);
   const [child, setChild] = useState(null);
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -75,23 +76,36 @@ const ParentActivities = ({ user }) => {
   const [activeFilter, setActiveFilter] = useState("today"); // "today" | "history" | "all"
   const [expandedDates, setExpandedDates] = useState({});
 
-  // ─── Load data ─────────────────────────────────────────────────────────────
+  // ─── Load children on mount ────────────────────────────────────────────────
   useEffect(() => {
-    const loadData = async () => {
+    const loadInitData = async () => {
       setLoading(true);
       try {
-        // Backend auto-filters students by parentId
         const studentList = await getStudents();
-        const myChild = Array.isArray(studentList) ? studentList[0] : null;
-        setChild(myChild);
-
-        if (!myChild) {
+        const childrenList = Array.isArray(studentList) ? studentList : [];
+        setChildren(childrenList);
+        if (childrenList.length > 0) {
+          setChild(childrenList[0]);
+        } else {
           setLoading(false);
-          return;
         }
+      } catch (err) {
+        console.error("Error loading children:", err);
+        setErrorMsg("Could not load children profiles.");
+        setLoading(false);
+      }
+    };
+    loadInitData();
+  }, []);
 
-        // Backend auto-filters activities for parent's child
-        const acts = await getActivities();
+  // ─── Load activities when selected child changes ───────────────────────────
+  useEffect(() => {
+    if (!child?._id) return;
+
+    const fetchChildActivities = async () => {
+      setLoading(true);
+      try {
+        const acts = await getActivities(child._id);
         const sorted = Array.isArray(acts)
           ? [...acts].sort((a, b) => {
               const dateCompare = (b.date || "").localeCompare(a.date || "");
@@ -104,17 +118,19 @@ const ParentActivities = ({ user }) => {
         // Auto-expand the most recent date
         if (sorted.length > 0 && sorted[0].date) {
           setExpandedDates({ [sorted[0].date]: true });
+        } else {
+          setExpandedDates({});
         }
       } catch (err) {
         console.error("Error loading activities:", err);
-        setErrorMsg("Could not load activities. Please try again.");
+        setErrorMsg("Could not load activities for this student.");
       } finally {
         setLoading(false);
       }
     };
 
-    loadData();
-  }, []);
+    fetchChildActivities();
+  }, [child?._id]);
 
   // ─── Toggle date group ─────────────────────────────────────────────────────
   const toggleDate = (dateKey) => {
@@ -193,13 +209,35 @@ const ParentActivities = ({ user }) => {
           </div>
         </div>
 
-        {/* Stats pill */}
-        {totalToday > 0 && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-full text-sm font-semibold shadow-md shadow-indigo-200">
-            <Star className="w-4 h-4" />
-            {totalToday} activit{totalToday !== 1 ? "ies" : "y"} today
-          </div>
-        )}
+        {/* Child Selector (only visible if parent has multiple children) & Stats */}
+        <div className="flex items-center gap-3 flex-wrap">
+          {children.length > 1 && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-xl border border-gray-200 shadow-sm focus-within:ring-2 focus-within:ring-indigo-300 transition-all">
+              <User className="w-4 h-4 text-indigo-500" />
+              <select
+                className="bg-transparent text-sm font-semibold text-gray-700 outline-none cursor-pointer pr-4"
+                value={child?._id || ""}
+                onChange={(e) => {
+                  const selected = children.find((c) => c._id === e.target.value);
+                  if (selected) setChild(selected);
+                }}
+              >
+                {children.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {totalToday > 0 && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-full text-sm font-semibold shadow-md shadow-indigo-200">
+              <Star className="w-4 h-4" />
+              {totalToday} activit{totalToday !== 1 ? "ies" : "y"} today
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Child profile card ───────────────────────────────────────────────── */}

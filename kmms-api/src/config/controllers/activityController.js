@@ -33,9 +33,17 @@ exports.getActivities = async (req, res) => {
 
     // Parents only see their child's activities
     if (req.user && req.user.role === "parent") {
-      const childStudent = await Student.findOne({ parentId: req.user._id }, "_id");
-      if (!childStudent) return res.json([]);
-      query.studentId = childStudent._id;
+      if (studentId) {
+        const isParentOfChild = await Student.findOne({ _id: studentId, parentId: req.user._id });
+        if (!isParentOfChild) {
+          return res.status(403).json({ message: "Not authorized to view activities for this student" });
+        }
+        query.studentId = studentId;
+      } else {
+        const childStudent = await Student.findOne({ parentId: req.user._id }, "_id");
+        if (!childStudent) return res.json([]);
+        query.studentId = childStudent._id;
+      }
     }
 
     const activities = await Activity.find(query).sort({ _id: -1 });

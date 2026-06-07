@@ -1,8 +1,9 @@
 import http from "./http";
 
 // GET all activities (backend filters by role automatically)
-export const getActivities = async () => {
-  const res = await http.get("/activities");
+export const getActivities = async (studentId) => {
+  const url = studentId ? `/activities?studentId=${studentId}` : "/activities";
+  const res = await http.get(url);
   return res.data;
 };
 
