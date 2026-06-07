@@ -40,11 +40,20 @@ export default function NotificationBell() {
     }
   }
 
+  useEffect(() => {
+    const unreadCount = notifications.filter(n => !n.isRead).length;
+    window.dispatchEvent(new CustomEvent('unread-notifications-count', { detail: unreadCount }));
+  }, [notifications]);
+
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
     <div className="relative">
-      <button onClick={() => setOpen(o => !o)} className="p-2 rounded-full hover:bg-brand-bg transition relative">
+      <button 
+        id="notification-bell-btn"
+        onClick={() => setOpen(o => !o)} 
+        className="p-2 rounded-full hover:bg-brand-bg transition relative"
+      >
         <span className="text-xl">🔔</span>
         {unreadCount > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full px-1.5">{unreadCount}</span>}
       </button>

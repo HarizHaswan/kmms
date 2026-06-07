@@ -14,16 +14,31 @@ import LiveDateTime from "../Common/LiveDateTime";
 
 import { getStudents } from "../../api/students";
 import { getTeacherTimetable } from "../../api/timetables"; 
+import { fetchNotifications } from "../../api/NotificationApi";
 
 const TeacherDashboard = ({ setActiveTab, user }) => {
   const [stats, setStats] = useState({
     studentCount: 0,
     activityCount: 0,
-    unreadMessages: 0,
+    unreadNotificationsCount: 0,
   });
   
   const [todayTimetable, setTodayTimetable] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const handleUnreadCountChange = (e) => {
+      setStats(prev => ({
+        ...prev,
+        unreadNotificationsCount: e.detail
+      }));
+    };
+
+    window.addEventListener('unread-notifications-count', handleUnreadCountChange);
+    return () => {
+      window.removeEventListener('unread-notifications-count', handleUnreadCountChange);
+    };
+  }, []);
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -45,10 +60,18 @@ const TeacherDashboard = ({ setActiveTab, user }) => {
         const todaySlots = (timetableData || []).filter(slot => slot.day === todayName);
         todaySlots.sort((a, b) => a.startTime.localeCompare(b.startTime));
 
+        let unreadNotifs = 0;
+        try {
+          const notifRes = await fetchNotifications();
+          unreadNotifs = (notifRes.data || []).filter(n => !n.isRead).length;
+        } catch (notifErr) {
+          console.error("Failed to fetch notifications for stats", notifErr);
+        }
+
         setStats({
           studentCount: myActiveStudents.length,
           activityCount: 0, 
-          unreadMessages: 0, 
+          unreadNotificationsCount: unreadNotifs, 
         });
         setTodayTimetable(todaySlots);
       } catch (err) {
@@ -118,10 +141,16 @@ const TeacherDashboard = ({ setActiveTab, user }) => {
         />
         <StatBox
           title="Notifications"
-          value={stats.unreadMessages}
+          value={stats.unreadNotificationsCount}
           icon={MessageSquare}
           color="bg-accent shadow-accent/30"
-          onClick={() => setActiveTab("messages")}
+          onClick={() => {
+            const bell = document.getElementById('notification-bell-btn');
+            if (bell) {
+              bell.scrollIntoView({ behavior: 'smooth' });
+              bell.click();
+            }
+          }}
         />
       </div>
 
