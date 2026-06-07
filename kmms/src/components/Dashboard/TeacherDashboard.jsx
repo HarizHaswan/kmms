@@ -15,6 +15,7 @@ import LiveDateTime from "../Common/LiveDateTime";
 import { getStudents } from "../../api/students";
 import { getTeacherTimetable } from "../../api/timetables"; 
 import { fetchNotifications } from "../../api/NotificationApi";
+import { getActivities } from "../../api/activities";
 
 const TeacherDashboard = ({ setActiveTab, user }) => {
   const [stats, setStats] = useState({
@@ -68,9 +69,18 @@ const TeacherDashboard = ({ setActiveTab, user }) => {
           console.error("Failed to fetch notifications for stats", notifErr);
         }
 
+        let todayActivitiesCount = 0;
+        try {
+          const activitiesData = await getActivities();
+          const todayStr = new Date().toISOString().split("T")[0];
+          todayActivitiesCount = (activitiesData || []).filter(act => act.date === todayStr).length;
+        } catch (actErr) {
+          console.error("Failed to fetch activities for stats", actErr);
+        }
+
         setStats({
           studentCount: myActiveStudents.length,
-          activityCount: 0, 
+          activityCount: todayActivitiesCount, 
           unreadNotificationsCount: unreadNotifs, 
         });
         setTodayTimetable(todaySlots);
