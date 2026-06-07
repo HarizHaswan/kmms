@@ -2,6 +2,7 @@ import React from "react";
 import { X } from "lucide-react";
 
 const TimetableGrid = ({ slots = [], onDeleteSlot }) => {
+  console.log("TimetableGrid - slots count:", slots.length, "has onDeleteSlot:", !!onDeleteSlot);
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
   // Custom Time Intervals as requested
@@ -36,11 +37,6 @@ const TimetableGrid = ({ slots = [], onDeleteSlot }) => {
 
   return (
     <div className="min-w-[800px] p-4">
-      <style>{`
-        .timetable-slot:hover .delete-slot-btn {
-          display: block !important;
-        }
-      `}</style>
       {/* --- HEADER ROW (TIMES) --- */}
       <div className="flex border-b border-gray-200 mb-2 pb-2 sticky top-0 bg-white z-10 relative">
         <div className="w-24 flex-shrink-0 font-bold text-gray-500 text-sm">Day/Time</div>
@@ -104,7 +100,7 @@ const TimetableGrid = ({ slots = [], onDeleteSlot }) => {
                   return (
                     <div
                       key={slot.id}
-                      className="absolute top-1 bottom-1 rounded-md px-2 py-1 text-xs shadow-sm bg-accent-light border border-accent/80 border-l-4 border-l-accent text-accent-dark overflow-hidden flex flex-col justify-center hover:z-30 hover:shadow-md transition-all cursor-pointer group/slot timetable-slot"
+                      className={`absolute top-1 bottom-1 rounded-md pl-2 ${onDeleteSlot ? "pr-7" : "pr-2"} py-1 text-xs shadow-sm bg-accent-light border border-accent/80 border-l-4 border-l-accent text-accent-dark overflow-hidden flex flex-col justify-center hover:z-30 hover:shadow-md transition-all cursor-pointer group/slot timetable-slot`}
                       style={style}
                       title={`${slot.startTime} - ${slot.endTime}: ${slot.subject}`}
                     >
@@ -122,7 +118,8 @@ const TimetableGrid = ({ slots = [], onDeleteSlot }) => {
                             e.stopPropagation();
                             onDeleteSlot(slot.id);
                           }}
-                          className="delete-slot-btn absolute top-1 right-1 hidden text-red-500 hover:text-red-700 bg-white/80 rounded-full p-0.5 z-40"
+                          className="absolute top-1 right-1 text-red-500 hover:text-red-700 bg-white hover:bg-red-50 border border-red-100 shadow-sm rounded-full p-0.5 z-40 transition-colors"
+                          title="Delete slot"
                         >
                           <X className="w-3 h-3" />
                         </button>
