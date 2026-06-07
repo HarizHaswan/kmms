@@ -187,9 +187,6 @@ const TeacherDashboard = ({ setActiveTab, user }) => {
                   className="p-5 bg-brand-bg/50 border border-transparent rounded-[1.5rem] flex flex-col sm:flex-row justify-between sm:items-center hover:bg-white hover:shadow-premium hover:border-gray-50 transition-all duration-300 group"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center font-bold text-primary">
-                       {slot.startTime?.split(':')[0]}
-                    </div>
                     <div>
                       <p className="font-extrabold text-brand-text text-lg group-hover:text-primary transition-colors">
                         {slot.classId?.className || slot.subject}
