@@ -60,7 +60,7 @@ const TimetableGrid = ({ slots = [], onDeleteSlot }) => {
 
         {/* FIXED SNACK TIME COLUMN (9:30 - 9:50) */}
         {/* Wrapper: Positions the context exactly over the timeline lane (skipping the 6rem sidebar) */}
-        <div className="absolute top-0 bottom-0 left-24 right-0 z-20">
+        <div className="absolute top-0 bottom-0 left-24 right-0 z-20 pointer-events-none">
           <div
             className="absolute top-0 bottom-0 bg-blue-100 border-l-2 border-r-2 border-blue-300 flex flex-col items-center justify-center pointer-events-none"
             style={getSlotStyle("09:30", "09:50")}
