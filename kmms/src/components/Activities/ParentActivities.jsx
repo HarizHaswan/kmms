@@ -105,7 +105,9 @@ const ParentActivities = ({ user }) => {
     const fetchChildActivities = async () => {
       setLoading(true);
       try {
+        console.log("ParentActivities - fetching for child ID:", child._id);
         const acts = await getActivities(child._id);
+        console.log("ParentActivities - acts returned:", acts);
         const sorted = Array.isArray(acts)
           ? [...acts].sort((a, b) => {
               const dateCompare = (b.date || "").localeCompare(a.date || "");
