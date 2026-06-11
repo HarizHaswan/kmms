@@ -233,7 +233,7 @@ const LeaveRequest = ({ teacherId }) => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Medical Certificate (Optional)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Supporting Document (Optional)</label>
                     <div className="relative">
                       <input
                         type="file"

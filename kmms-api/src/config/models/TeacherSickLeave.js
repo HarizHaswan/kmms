@@ -5,7 +5,7 @@ const SickLeaveSchema = new mongoose.Schema({
   startDate: { type: Date, required: true },
   endDate: { type: Date },
   reason: { type: String },
-  attachment: { type: String },  // URL or path to the medical certificate
+  attachment: { type: String },  // URL or path to the Supporting Document
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   submittedAt: { type: Date, default: Date.now },
   reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
